@@ -6,6 +6,7 @@ import ApiService from "../../services/ApiService";
 import { toast } from "react-toastify";
 import SocketService from "../../services/SocketService";
 import { Link } from "react-router-dom";
+import PaymentModal from "../../components/PaymentModal";
 
 
 const formatMessageText = (text = "") => {
@@ -13,7 +14,17 @@ const formatMessageText = (text = "") => {
   if (!trimmed) return "";
   return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
 };
-const userProfile = JSON.parse(localStorage.getItem("loggedUser")) || null;
+const userProfile = (() => {
+  try {
+    const userStr = localStorage.getItem("loggedUser");
+    if (userStr && userStr !== "undefined" && userStr.startsWith("{")) {
+      return JSON.parse(userStr);
+    }
+  } catch (e) {
+    console.error("Error parsing loggedUser in Chat List", e);
+  }
+  return null;
+})();
 
 
 const List = () => {
@@ -80,6 +91,48 @@ const List = () => {
   const [inactiveLawyers, setInactiveLawyers] = useState([]);
   const [loadingLawyers, setLoadingLawyers] = useState(false);
   const [pagination, setPagination] = useState(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState(0);
+  const [paymentData, setPaymentData] = useState({});
+
+  const handlePayNow = (message) => {
+    if (!message.invoice_data || !message.invoice_data.total_amount) {
+      toast.error("Invalid invoice data");
+      return;
+    }
+    
+    setPaymentAmount(parseFloat(message.invoice_data.total_amount));
+    setPaymentData({
+      message_id: message.id,
+      // You might want to pass other necessary data here
+    });
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSuccess = async (result) => {
+    try {
+      // Call InvoicePaid API
+      const response = await ApiService.request({
+        method: "POST",
+        url: "invoicePaid",
+        data: {
+          message_id: result.message_id,
+          transaction_id: result.paymentIntentId // Pass transaction ID from Stripe
+        }
+      });
+
+      if (response.data.status) {
+        toast.success(response.data.message || "Invoice paid successfully!");
+        // Refresh messages to show updated status
+        fetchChatMessages();
+      } else {
+        toast.error(response.data.message || "Failed to mark invoice as paid");
+      }
+    } catch (error) {
+      console.error("Error confirming invoice payment:", error);
+      toast.error("Failed to confirm payment");
+    }
+  };
 
   // Fetch active and inactive lawyers from API
   useEffect(() => {
@@ -334,6 +387,7 @@ const List = () => {
           return {
             id: msg.id,
             text: msg.message || "",
+            invoice_data: msg.invoice_data || null,
             time: messageTime,
             isFromUser: msg.sender === "user",
             sender: msg.sender,
@@ -402,10 +456,26 @@ const List = () => {
 
   // Socket listener for new messages
   useEffect(() => {
+    // Ensure socket is connected
+    if (!SocketService.checkConnection()) {
+      SocketService.connect();
+    }
+
     const unsubscribe = SocketService.subscribe("receive-message", (data) => {
       console.log("New message received via socket:", data);
       
       if (!selectedChat) return;
+
+      // Check if message belongs to current chat
+      // Support both normal chats (chat_id) and service chats (user_service_id)
+      const isCurrentChat = 
+        (selectedChat.chatId && parseInt(data.chat_id) === parseInt(selectedChat.chatId)) ||
+        (selectedChat.userServiceId && parseInt(data.user_service_id) === parseInt(selectedChat.userServiceId));
+
+      if (!isCurrentChat) {
+        // If not current chat, just update unread count in sidebar (optional)
+        return;
+      }
 
       // Transform the new message
       const messageTime = data.created_at 
@@ -423,6 +493,7 @@ const List = () => {
       const newMessage = {
         id: data.id || Date.now(),
         text: data.message || "",
+        invoice_data: data.invoice_data || null, // Ensure invoice data is included
         time: messageTime,
         isFromUser: data.sender === "user",
         sender: data.sender,
@@ -434,14 +505,20 @@ const List = () => {
       };
 
       // Append to messages
-      setMessages((prevMessages) => [...prevMessages, newMessage]);
+      setMessages((prevMessages) => {
+        // Prevent duplicate messages
+        if (prevMessages.some(msg => msg.id === newMessage.id)) {
+          return prevMessages;
+        }
+        return [...prevMessages, newMessage];
+      });
       
       // Update last message in sidebar
       setChatContacts(prev => prev.map(chat => 
         chat.chatId === selectedChat.chatId
           ? { 
               ...chat, 
-              lastMessage: newMessage.text, 
+              lastMessage: newMessage.text || (newMessage.file ? `📎 ${newMessage.file_name}` : ''), 
               time: newMessage.time,
               unread: 0
             }
@@ -462,6 +539,36 @@ const List = () => {
     return unsubscribe;
   }, [selectedChat]);
 
+  // Listen for invoice-paid event
+  useEffect(() => {
+    const unsubscribe = SocketService.subscribe("invoice-paid", (data) => {
+      console.log("Invoice paid event received:", data);
+      
+      if (!selectedChat) return;
+
+      // Check if message belongs to current chat
+      const isCurrentChat = 
+        (selectedChat.chatId && parseInt(data.chat_id) === parseInt(selectedChat.chatId));
+
+      if (!isCurrentChat) return;
+
+      // Update the specific message in the list
+      setMessages(prevMessages => prevMessages.map(msg => {
+        if (parseInt(msg.id) === parseInt(data.message_id)) {
+          return {
+            ...msg,
+            invoice_data: {
+              ...msg.invoice_data,
+              pay_status: 'Paid',
+              task_status: 'In Progress' // Usually starts as In Progress after payment
+            }
+          };
+        }
+        return msg;
+      }));
+    });
+    return unsubscribe;
+  }, [selectedChat]);
   // Scroll to bottom when messages change or when loading completes
   useEffect(() => {
     if (!loadingMessages && messages.length > 0) {
@@ -1110,6 +1217,26 @@ const List = () => {
                               {message.text && (
                                 <p className="mb-0">{message.text}</p>
                               )}
+                              {message.invoice_data && (
+                                <div className="mb-2">
+                                  <h6 className="mb-0">{message.invoice_data['items'][0].title ?? '--'}</h6>
+                                  <hr />
+                                  <h6 className="mb-2">Total: ${message.invoice_data['total_amount'] ?? '--'}</h6>
+                                  {message.invoice_data.pay_status=='Pending' ? (
+                                    <button 
+                                      className="btn btn-sm btn-success"
+                                      onClick={() => handlePayNow(message)}
+                                    >
+                                      Pay Now
+                                    </button>
+                                  ):(
+                                    <>
+                                      <span className="badge bg-light-success text-success">Paid</span> <br />
+                                      <span className="text-dark">Task Status: {message.invoice_data.task_status}</span>
+                                    </>
+                                  )}
+                                </div>
+                              )}
                               <small
                                 className={`d-block mt-1 ${
                                   message.isFromUser
@@ -1229,6 +1356,18 @@ const List = () => {
           </div>
         </div>
       </div>
+      
+      {/* Payment Modal */}
+      <PaymentModal
+        show={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        amount={paymentAmount}
+        onSuccess={handlePaymentSuccess}
+        title="Pay Invoice"
+        saveCard={true}
+        paymentType="invoice" // Use a type that backend supports for initialization (might need adjustment if backend only supports 'question' or 'service')
+        paymentData={paymentData}
+      />
     </div>
   );
 };

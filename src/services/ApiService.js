@@ -17,9 +17,16 @@ const apiClient = axios.create({
 // Main ApiService function for making API requests
 const ApiService = {
   async request({ method, url, data, headers = {} }) {
-    const token = localStorage.getItem('loggedUser')
-      ? JSON.parse(localStorage.getItem('loggedUser')).auth_token
-      : null;
+    let token = null;
+    try {
+      const loggedUser = localStorage.getItem('loggedUser');
+      if (loggedUser && loggedUser !== 'undefined' && loggedUser.startsWith('{')) {
+        token = JSON.parse(loggedUser).auth_token;
+      }
+    } catch (e) {
+      console.error("Error parsing loggedUser from localStorage", e);
+      localStorage.removeItem('loggedUser');
+    }
     
     const config = {
       method,

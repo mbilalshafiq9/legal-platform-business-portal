@@ -24,7 +24,10 @@ const List = () => {
   };
 
   const [selectedFilter, setSelectedFilter] = useState(
-    loadFromLocalStorage("lawyers_selectedFilter", "Company")
+    loadFromLocalStorage("lawyers_selectedFilter", "")
+  );
+  const [typeFilter, setTypeFilter] = useState(
+    loadFromLocalStorage("lawyers_typeFilter", "")
   );
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(
@@ -65,6 +68,14 @@ const List = () => {
   const [showPricingOptions, setShowPricingOptions] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setSelectedCategory("");
+    setSelectedJurisdiction("");
+    setTypeFilter("");
+    setSelectedFilter("");
+  };
 
   const handleLawyerClick = async (lawyer) => {
     setSelectedLawyer(lawyer);
@@ -318,16 +329,16 @@ const List = () => {
             requestData.search = searchTerm.trim();
           }
 
-          // Add category filter
-          if (selectedCategory && selectedFilter === "Categories") {
+          // Add category filter (independent of selectedFilter)
+          if (selectedCategory) {
             const categoryObj = categories.find(cat => cat.name === selectedCategory || cat.id === selectedCategory);
             if (categoryObj) {
               requestData.categories = JSON.stringify([categoryObj.id]);
             }
           }
 
-          // Add jurisdiction filter
-          if (selectedJurisdiction && selectedFilter === "Jurisdiction") {
+          // Add jurisdiction filter (independent of selectedFilter)
+          if (selectedJurisdiction) {
             const jurisdictionObj = jurisdictions.find(j => j.name === selectedJurisdiction || j.id === selectedJurisdiction);
             if (jurisdictionObj) {
               requestData.jurisdictions = JSON.stringify([jurisdictionObj.id]);
@@ -372,15 +383,17 @@ const List = () => {
                 categories: lawyerCategories,
                 jurisdictions: lawyerJurisdictions,
                 rawData: lawyer,
+                weekly_price: lawyer.weekly_price || 0,
+                monthly_price: lawyer.monthly_price || 0,
               };
             });
 
             console.log("Transformed Lawyers:", transformedLawyers); // Debug log
 
             // Apply Company/Individual filter client-side
-            if (selectedFilter === "Company") {
+            if (typeFilter === "Company") {
               transformedLawyers = transformedLawyers.filter(lawyer => lawyer.type === "Company");
-            } else if (selectedFilter === "Individual") {
+            } else if (typeFilter === "Individual") {
               transformedLawyers = transformedLawyers.filter(lawyer => lawyer.type === "Individual");
             }
 
@@ -406,12 +419,13 @@ const List = () => {
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [searchTerm, selectedFilter, selectedCategory, selectedJurisdiction, categories, jurisdictions]);
+  }, [searchTerm, selectedCategory, selectedJurisdiction, categories, jurisdictions, typeFilter]);
 
   // Save state to localStorage whenever it changes
   useEffect(() => {
     try {
       localStorage.setItem("lawyers_selectedFilter", JSON.stringify(selectedFilter));
+      localStorage.setItem("lawyers_typeFilter", JSON.stringify(typeFilter));
       localStorage.setItem("lawyers_selectedCategory", JSON.stringify(selectedCategory));
       localStorage.setItem("lawyers_selectedJurisdiction", JSON.stringify(selectedJurisdiction));
       localStorage.setItem("lawyers_showLawyerDetail", JSON.stringify(showLawyerDetail));
@@ -422,15 +436,14 @@ const List = () => {
     } catch (error) {
       console.error("Error saving lawyers data to localStorage:", error);
     }
-  }, [selectedFilter, selectedCategory, selectedJurisdiction, showLawyerDetail, selectedLawyer, currentSlideIndex, selectedPricingOption, showPricingOptions]);
+  }, [selectedFilter, typeFilter, selectedCategory, selectedJurisdiction, showLawyerDetail, selectedLawyer, currentSlideIndex, selectedPricingOption, showPricingOptions]);
 
   const handleFilterClick = (filter) => {
-    setSelectedFilter(filter);
-    if (filter !== "Categories") {
-      setSelectedCategory("");
-    }
-    if (filter !== "Jurisdiction") {
-      setSelectedJurisdiction("");
+    if (filter === "Company" || filter === "Individual") {
+      setTypeFilter(filter);
+      setSelectedFilter(filter);
+    } else {
+      setSelectedFilter(filter);
     }
   };
 
@@ -527,17 +540,18 @@ const List = () => {
       {/* Search and Filter Section */}
       <div className="row mb-4" data-aos="fade-up">
         <div className="col-12 px-0">
-          {/* Search Bar */}
+          {/* Search Bar + Clear Filters */}
           <div
-            className="d-flex justify-content-center mb-4 bg-white lawyers-list-header-bar"
+            className="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 bg-white lawyers-list-header-bar"
             style={{
               borderBottom: "0.1px solid #e6e6e6",
               borderTop: "0.1px solid #e6e6e6",
-              marginTop: "28px"
+              marginTop: "28px",
+              paddingInline: "16px",
             }}
           >
             <div
-              className="position-relative my-5"
+              className="position-relative my-4 my-md-5 flex-grow-1"
               style={{ width: "100%", maxWidth: "1096px" }}
             >
               <input
@@ -562,6 +576,19 @@ const List = () => {
                 style={{ left: "20px" }}
               ></i>
             </div>
+            {(searchTerm ||
+              selectedCategory ||
+              selectedJurisdiction ||
+              typeFilter !== "Company") && (
+              <button
+                type="button"
+                className="btn btn-outline-secondary ms-md-3 mb-4 mb-md-0"
+                onClick={clearFilters}
+                style={{ borderRadius: "25px", height: "40px", whiteSpace: "nowrap" }}
+              >
+                Clear Filters
+              </button>
+            )}
           </div>
         </div>
          {/* Filter Buttons */}
@@ -573,7 +600,7 @@ const List = () => {
                    <button
                      ref={categoryButtonRef}
                      className={`btn px-4 py-2 portal-button-hover ${
-                       selectedFilter === filter
+                       selectedFilter === filter || selectedCategory
                          ? "bg-black text-white"
                          : "bg-white text-black"
                      }`}
@@ -603,7 +630,7 @@ const List = () => {
                    <button
                      ref={jurisdictionButtonRef}
                      className={`btn px-4 py-2 portal-button-hover ${
-                       selectedFilter === filter
+                       selectedFilter === filter || selectedJurisdiction
                          ? "bg-black text-white"
                          : "bg-white text-black"
                      }`}
@@ -631,7 +658,7 @@ const List = () => {
                ) : (
                  <button
                    className={`btn px-4 py-2 ${
-                     selectedFilter === filter
+                     typeFilter === filter
                        ? "bg-black text-white"
                        : "bg-white text-black"
                    }`}
@@ -640,7 +667,7 @@ const List = () => {
                      fontSize: "0.9rem",
                      fontWeight: "500",
                      borderRadius: "25px",
-                     border: selectedFilter === filter ? "none" : "1px solid #e9ecef",
+                     border: typeFilter === filter ? "none" : "1px solid #e9ecef",
                      minWidth: "120px",
                      height: "40px",
                      display: "flex",
@@ -712,8 +739,9 @@ const List = () => {
                   onLoad={() => handleImageLoad(`lawyer-${lawyer.id}`)}
                   onError={() => handleImageError(`lawyer-${lawyer.id}`)}
                   style={{
-                    height: "200px",
+                    height: "320px",
                     objectFit: "cover",
+                    objectPosition: "center",
                     width: "100%",
                     borderTopRightRadius: "15px",
                     borderTopLeftRadius: "15px",
@@ -727,7 +755,6 @@ const List = () => {
                     <h5 className="card-title fw-bold text-dark mb-2" style={{ fontSize: "1.1rem", lineHeight: "1.3" }}>
                       {lawyer.name}
                     </h5>
-                    <p className="text-muted mb-3" style={{ fontSize: "0.9rem", fontWeight: "500" }}>{lawyer.title}</p>
                     <div className="d-flex align-items-center justify-content-start mb-3">
                       <div className="d-flex align-items-center me-5">
                         <i className="bi bi-star-fill text-dark me-1" style={{ fontSize: "0.9rem" }}></i>
@@ -740,7 +767,12 @@ const List = () => {
                         <span className="text-muted" style={{ fontSize: "1rem" }}>{lawyer.location}</span>
                       </div>
                     </div>
-                    <p className="text-muted mb-0" style={{ fontSize: "0.8rem", lineHeight: "1.4" }}>{lawyer.specialization}</p>
+                    <p className="text-muted mb-3" style={{ fontSize: "0.9rem", fontWeight: "500" }}>{lawyer.categories[0]?.name} +{lawyer.categories.length}</p>
+                    <p className="text-muted mb-3" style={{ fontSize: "0.9rem", lineHeight: "1.4" }}>Jurisdiction: {lawyer.categories[0]?.name} +{lawyer.categories.length}</p>
+                    <div className="">
+                      <p className="text-dark mb-0 float-start fw-semibold" style={{ fontSize: "1rem", lineHeight: "1.4" }}>$ {lawyer.weekly_price} / On Time Service </p>
+                      <p className="text-dark mb-0 float-end fw-semibold" style={{ fontSize: "1rem", lineHeight: "1.4" }}>$ {lawyer.monthly_price} / Monthly </p>
+                    </div>
                   </>
                 ) : (
                   <>
@@ -1201,20 +1233,20 @@ const List = () => {
               )}
 
               {/* Response Time */}
-              {lawyerDetails?.response_time && (
+              {/* {lawyerDetails?.response_time && (
                 <div className="mb-4 px-3">
                   <h6 className="fw-bold text-dark mb-2">Response Time</h6>
                   <p className="text-muted mb-0">{lawyerDetails.response_time}</p>
                 </div>
-              )}
+              )} */}
 
               {/* Consultation Count */}
-              {lawyerDetails?.consult_count !== undefined && (
+              {/* {lawyerDetails?.consult_count !== undefined && (
                 <div className="mb-4 px-3">
                   <h6 className="fw-bold text-dark mb-2">Consultations Completed</h6>
                   <p className="text-muted mb-0">{lawyerDetails.consult_count}</p>
                 </div>
-              )}
+              )} */}
             </div>
             )}
             {/* Pricing and Action Section - Fixed at bottom */}
@@ -1365,6 +1397,15 @@ const List = () => {
                       backgroundColor: "#474747",
                       border: "none",
                       color: "#ffffff"
+                    }}
+                    onClick={() => {
+                      if (!lawyerDetails) return;
+                      const selectedOption = pricingOptions.find(opt => opt.value === selectedPricingOption);
+                      if (!selectedOption) {
+                        toast.error("Please select a pricing option");
+                        return;
+                      }
+                      setShowPaymentModal(true);
                     }}
                   >
                     <i className="bi bi-apple me-2 text-white" style={{ fontSize: "1.2rem" }}></i>

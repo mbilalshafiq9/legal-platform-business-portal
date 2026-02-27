@@ -3,6 +3,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import {
   Elements,
   CardElement,
+  PaymentRequestButtonElement,
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
@@ -27,6 +28,86 @@ const PaymentForm = ({
   const [selectedCard, setSelectedCard] = useState(null);
   const [saveCardForFuture, setSaveCardForFuture] = useState(saveCard);
   const [cardError, setCardError] = useState(null);
+  const [paymentRequest, setPaymentRequest] = useState(null);
+  const [canMakePayment, setCanMakePayment] = useState(null); // null = checking, true = yes, false = no
+
+  useEffect(() => {
+    if (stripe && amount) {
+      const pr = stripe.paymentRequest({
+        country: 'US',
+        currency: 'usd',
+        total: {
+          label: 'Total Payment',
+          amount: Math.round(amount * 100),
+        },
+        requestPayerName: true,
+        requestPayerEmail: true,
+      });
+
+      // Check the availability of the Payment Request API.
+      pr.canMakePayment().then((result) => {
+        console.log("canMakePayment result:", result);
+        setCanMakePayment(!!result);
+        if (result) {
+          setPaymentRequest(pr);
+        }
+      });
+
+      pr.on('paymentmethod', async (ev) => {
+        setProcessing(true);
+        setCardError(null);
+
+        // Confirm the PaymentIntent without handling shipping
+        const {error: confirmError, paymentIntent} = await stripe.confirmCardPayment(
+          paymentIntentClientSecret,
+          {payment_method: ev.paymentMethod.id},
+          {handleActions: false}
+        );
+
+        if (confirmError) {
+          // Report to the browser that the payment failed, prompting it to
+          // re-show the payment interface, or show an error message and close
+          // the payment interface.
+          ev.complete('fail');
+          setCardError(confirmError.message);
+          setProcessing(false);
+        } else {
+          // Report to the browser that the confirmation was successful, prompting
+          // it to close the browser payment method collection interface.
+          ev.complete('success');
+          
+          // Check if we require further actions (like 3DS)
+          if (paymentIntent.status === "requires_action") {
+            // Let Stripe.js handle the rest of the payment flow.
+            const {error, paymentIntent: confirmedIntent} = await stripe.confirmCardPayment(paymentIntentClientSecret);
+            if (error) {
+              setCardError(error.message);
+              setProcessing(false);
+            } else {
+               handleSuccess(confirmedIntent, ev.paymentMethod.id);
+            }
+          } else {
+             handleSuccess(paymentIntent, ev.paymentMethod.id);
+          }
+        }
+      });
+    }
+  }, [stripe, amount, paymentIntentClientSecret]);
+
+  const handleSuccess = async (paymentIntent, paymentMethodId) => {
+    if (paymentIntent.status === "succeeded") {
+        // Save card logic if needed (Apple Pay cards might not be saveable the same way or user might not want to)
+        // For now, we only save explicitly entered cards via CardElement if checked.
+        
+        onSuccess({
+          paymentIntentId: paymentIntent.id,
+          paymentMethodId: paymentMethodId,
+        });
+      } else {
+        setCardError("Payment failed. Please try again.");
+        setProcessing(false);
+      }
+  }
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -63,9 +144,21 @@ const PaymentForm = ({
         // Save card if requested
         if (saveCardForFuture) {
           try {
-            // Attach payment method to customer via backend
-            // The backend will handle attaching to customer
-            // Refresh saved cards after payment succeeds
+             // Call backend to attach payment method to customer
+             await ApiService.request({
+              method: "POST",
+              url: "saveCard",
+              data: {
+                payment_method_id: paymentMethodId,
+              },
+            });
+            
+            // Refresh saved cards
+            if (onCardSaved) {
+              setTimeout(() => {
+                onCardSaved();
+              }, 1000);
+            }
           } catch (saveError) {
             console.error("Error saving card:", saveError);
             // Continue with payment even if saving fails
@@ -88,30 +181,6 @@ const PaymentForm = ({
       }
 
       if (paymentIntent.status === "succeeded") {
-        // Save card if requested and using new card
-        if (saveCardForFuture && !selectedCard) {
-          try {
-            // Call backend to attach payment method to customer
-            await ApiService.request({
-              method: "POST",
-              url: "saveCard",
-              data: {
-                payment_method_id: paymentMethodId,
-              },
-            });
-            
-            // Refresh saved cards
-            if (onCardSaved) {
-          setTimeout(() => {
-            onCardSaved();
-          }, 1000);
-            }
-          } catch (saveError) {
-            console.error("Error saving card:", saveError);
-            // Continue with payment success even if saving fails
-          }
-        }
-        
         onSuccess({
           paymentIntentId: paymentIntent.id,
           paymentMethodId: paymentMethodId,
@@ -144,130 +213,147 @@ const PaymentForm = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="payment-form">
-      {/* Saved Cards */}
-      {savedCards.length > 0 && (
+    <div className="payment-container">
+      {/* Apple Pay / Google Pay Button */}
+      {paymentRequest && (
         <div className="mb-4">
-          <label className="form-label fw-bold">Select Saved Card</label>
-          <div className="saved-cards-list">
-            {savedCards.map((card) => (
-              <div
-                key={card.id}
-                className={`saved-card-item p-3 mb-2 rounded border ${
-                  selectedCard?.id === card.id ? "border-primary bg-light" : "border-secondary"
-                }`}
-                style={{ cursor: "pointer" }}
-                onClick={() => setSelectedCard(card)}
-              >
-                <div className="d-flex align-items-center justify-content-between">
-                  <div className="d-flex align-items-center">
-                    <div
-                      className="me-3"
-                      style={{
-                        width: "40px",
-                        height: "30px",
-                        backgroundColor: "#f0f0f0",
-                        borderRadius: "4px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <i className="bi bi-credit-card"></i>
-                    </div>
-                    <div>
-                      <div className="fw-bold">
-                        {card.brand?.toUpperCase() || "CARD"} •••• {card.last4}
+          <div className="p-3">
+            <PaymentRequestButtonElement options={{paymentRequest}} />
+          </div>
+          <div className="d-flex align-items-center my-3">
+            <div className="flex-grow-1 border-bottom"></div>
+            <span className="mx-3 text-muted fw-bold">OR</span>
+            <div className="flex-grow-1 border-bottom"></div>
+          </div>
+        </div>
+      )}
+
+      {/* Credit Card Form */}
+      <form onSubmit={handleSubmit} className="payment-form">
+        {/* Saved Cards */}
+        {savedCards.length > 0 && (
+            <div className="mb-4">
+              <label className="form-label fw-bold">Select Saved Card</label>
+              <div className="saved-cards-list">
+                {savedCards.map((card) => (
+                  <div
+                    key={card.id}
+                    className={`saved-card-item p-3 mb-2 rounded border ${
+                      selectedCard?.id === card.id ? "border-primary bg-light" : "border-secondary"
+                    }`}
+                    style={{ cursor: "pointer" }}
+                    onClick={() => setSelectedCard(card)}
+                  >
+                    <div className="d-flex align-items-center justify-content-between">
+                      <div className="d-flex align-items-center">
+                        <div
+                          className="me-3"
+                          style={{
+                            width: "40px",
+                            height: "30px",
+                            backgroundColor: "#f0f0f0",
+                            borderRadius: "4px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <i className="bi bi-credit-card"></i>
+                        </div>
+                        <div>
+                          <div className="fw-bold">
+                            {card.brand?.toUpperCase() || "CARD"} •••• {card.last4}
+                          </div>
+                          <small className="text-muted">
+                            Expires {card.exp_month}/{card.exp_year}
+                          </small>
+                        </div>
                       </div>
-                      <small className="text-muted">
-                        Expires {card.exp_month}/{card.exp_year}
-                      </small>
+                      {selectedCard?.id === card.id && (
+                        <i className="bi bi-check-circle-fill text-primary"></i>
+                      )}
                     </div>
                   </div>
-                  {selectedCard?.id === card.id && (
-                    <i className="bi bi-check-circle-fill text-primary"></i>
-                  )}
-                </div>
+                ))}
               </div>
-            ))}
+              <div className="text-center mb-3">
+                <button
+                  type="button"
+                  className="btn btn-link text-decoration-none"
+                  onClick={() => setSelectedCard(null)}
+                >
+                  Use New Card
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* New Card Form */}
+          {!selectedCard && (
+            <div className="mb-4">
+              <label className="form-label fw-bold">Card Details</label>
+              <div className="p-3 border rounded">
+                <CardElement options={cardElementOptions} />
+              </div>
+              {cardError && (
+                <div className="text-danger mt-2 small">{cardError}</div>
+              )}
+            </div>
+          )}
+
+          {/* Save Card Checkbox */}
+          {!selectedCard && (
+            <div className="mb-4">
+              <div className="form-check">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="saveCard"
+                  checked={saveCardForFuture}
+                  onChange={(e) => setSaveCardForFuture(e.target.checked)}
+                />
+                <label className="form-check-label" htmlFor="saveCard">
+                  Save this card for future payments
+                </label>
+              </div>
+            </div>
+          )}
+
+          {/* Amount Display */}
+          <div className="mb-4 p-3 bg-light rounded">
+            <div className="d-flex justify-content-between align-items-center">
+              <span className="fw-bold">Total Amount:</span>
+              <span className="fw-bold fs-5">${amount.toFixed(2)}</span>
+            </div>
           </div>
-          <div className="text-center mb-3">
+
+          {/* Action Buttons */}
+          <div className="d-flex gap-2">
             <button
               type="button"
-              className="btn btn-link text-decoration-none"
-              onClick={() => setSelectedCard(null)}
+              className="btn btn-secondary flex-fill"
+              onClick={onCancel}
+              disabled={processing}
             >
-              Use New Card
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="btn btn-primary flex-fill"
+              disabled={processing || !stripe}
+            >
+              {processing ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                  Processing...
+                </>
+              ) : (
+                `Pay $${amount.toFixed(2)}`
+              )}
             </button>
           </div>
-        </div>
-      )}
-
-      {/* New Card Form */}
-      {!selectedCard && (
-        <div className="mb-4">
-          <label className="form-label fw-bold">Card Details</label>
-          <div className="p-3 border rounded">
-            <CardElement options={cardElementOptions} />
-          </div>
-          {cardError && (
-            <div className="text-danger mt-2 small">{cardError}</div>
-          )}
-        </div>
-      )}
-
-      {/* Save Card Checkbox */}
-      {!selectedCard && (
-        <div className="mb-4">
-          <div className="form-check">
-            <input
-              className="form-check-input"
-              type="checkbox"
-              id="saveCard"
-              checked={saveCardForFuture}
-              onChange={(e) => setSaveCardForFuture(e.target.checked)}
-            />
-            <label className="form-check-label" htmlFor="saveCard">
-              Save this card for future payments
-            </label>
-          </div>
-        </div>
-      )}
-
-      {/* Amount Display */}
-      <div className="mb-4 p-3 bg-light rounded">
-        <div className="d-flex justify-content-between align-items-center">
-          <span className="fw-bold">Total Amount:</span>
-          <span className="fw-bold fs-5">${amount.toFixed(2)}</span>
-        </div>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="d-flex gap-2">
-        <button
-          type="button"
-          className="btn btn-secondary flex-fill"
-          onClick={onCancel}
-          disabled={processing}
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="btn btn-primary flex-fill"
-          disabled={processing || !stripe}
-        >
-          {processing ? (
-            <>
-              <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-              Processing...
-            </>
-          ) : (
-            `Pay $${amount.toFixed(2)}`
-          )}
-        </button>
-      </div>
-    </form>
+        </form>
+    </div>
   );
 };
 
@@ -284,7 +370,6 @@ const PaymentModal = ({
   const [stripeKey, setStripeKey] = useState(null);
   const [paymentIntent, setPaymentIntent] = useState(null);
   const [savedCards, setSavedCards] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(false);
 
   // Initialize payment when modal opens
@@ -309,6 +394,12 @@ const PaymentModal = ({
         response = await ApiService.request({
           method: "POST",
           url: "paymentForQuestion",
+          data: { amount },
+        });
+      } else if (paymentType === "invoice") {
+        response = await ApiService.request({
+          method: "POST",
+          url: "paymentForInvoice",
           data: { amount },
         });
       } else {
@@ -423,4 +514,3 @@ const PaymentModal = ({
 };
 
 export default PaymentModal;
-

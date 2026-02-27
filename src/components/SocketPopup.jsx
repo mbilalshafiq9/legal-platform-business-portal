@@ -16,26 +16,21 @@ const SocketIOPopup = () => {
   
   useEffect(() => {
     initializeAudio();
-    initializeSocket();
+    
+    // Subscribe using the service method which handles connection safely
+    const unsubscribe = socketService.subscribe('newOrder', (data) => {
+      setOrder(data);
+      setOrderHeading(`New Order #${data.order_code}`);
+      setOrderText(`Order #${data.order_code} on Branch ${data?.branch?.name}`);
+      setShowPopup(true);
+      playSound();
+    });
 
     // Cleanup function
     return () => {
-      if (socketService.socket) {
-        socketService.socket.off('newOrder');
-      }
+      unsubscribe();
     };
   }, []);
-
-  const initializeSocket = () => {
-      
-      socketService.socket.on('newOrder', (data) => {
-            setOrder(data);
-            setOrderHeading(`New Order #${data.order_code}`);
-            setOrderText(`Order #${data.order_code} on Branch ${data?.branch?.name}`);
-            setShowPopup(true);
-            playSound();
-      });
-  };
 
   const initializeAudio = () => {
     audioRef.current = new Audio(audioFile);

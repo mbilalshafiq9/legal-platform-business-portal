@@ -8,12 +8,12 @@ class AuthService {
   }
 
   // User login - sends OTP to email
-  async userLogin(email, language = 'en') {
+  async userLogin(email, language = 'en', deviceToken = null, is_company = 1) {
     try {
       const response = await ApiService.request({
         method: 'POST',
         url: 'login',
-        data: { email, language },
+        data: { email, language, deviceToken, is_company },
       });
 
       return response.data;
@@ -23,12 +23,12 @@ class AuthService {
   }
 
   // Verify OTP and get auth token
-  async verifyOTP(email, otp) {
+  async verifyOTP(email, otp, deviceToken = null) {
     try {
       const response = await ApiService.request({
         method: 'POST',
         url: 'verifyOTP',
-        data: { email, otp },
+        data: { email, otp, deviceToken },
       });
 
       if (response.data && response.data.status && response.data.data) {
@@ -43,6 +43,33 @@ class AuthService {
         return response.data;
       }
       
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Google login
+  async googleLogin(name, email, googleId, deviceToken = null) {
+    try {
+      const response = await ApiService.request({
+        method: 'POST',
+        url: 'google-signin',
+        data: { name, email, googleId, deviceToken },
+      });
+
+      if (response.data && response.data.status && response.data.data) {
+        // Save user and auth token to localStorage
+        var loggedUser = response.data.data.user;
+        loggedUser.auth_token = response.data.data.auth_token;
+        loggedUser.lastLogin = new Date().toISOString();
+        
+        localStorage.setItem('loggedUser', JSON.stringify(loggedUser));
+        localStorage.setItem('isAuthenticated', 'true');
+        
+        return response.data;
+      }
+
       return response.data;
     } catch (error) {
       throw error;

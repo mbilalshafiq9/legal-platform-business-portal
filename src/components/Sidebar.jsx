@@ -202,7 +202,7 @@ const Sidebar = () => {
         </button>
       </div>
 
-      <div className="app-sidebar-menu overflow-hidden flex-column-fluid">
+      <div className="app-sidebar-menu overflow-auto  flex-column-fluid" style={{ height: "calc(100vh - 100px)" }}>
         <div
           id="kt_app_sidebar_menu_wrapper"
           className="app-sidebar-wrapper hover-scroll-overlay-y my-5"
@@ -347,7 +347,7 @@ const Sidebar = () => {
                 <span className="menu-icon">
                   <i class="bi bi-file-earmark-text"></i>
                 </span>
-                <span className="menu-title fs-6">Terms of Use</span>
+                <span className="menu-title fs-6">Account Settings</span>
               </NavLink>
             </div>
 
@@ -362,14 +362,14 @@ const Sidebar = () => {
                     <span className="menu-title fs-6">Help & Support</span>
                   </NavLink>
                 </div>
-                <div className="menu-item">
+                {/* <div className="menu-item">
                   <NavLink to="/track-my-ticket" className="menu-link portal-nav-hover">
                     <span className="menu-icon">
                       <i class="bi bi-ticket-perforated"></i>
                     </span>
                     <span className="menu-title fs-6">Track My Ticket</span>
                   </NavLink>
-                </div>
+                </div> */}
               </>
             ) : (
               <div className="menu-item">
@@ -410,7 +410,7 @@ const Sidebar = () => {
                       <span className="menu-title fs-6">Help & Support</span>
                     </NavLink>
                   </div>
-                  <div className="menu-item">
+                  {/* <div className="menu-item">
                     <NavLink
                       to="/track-my-ticket"
                       className="menu-link portal-nav-hover"
@@ -421,7 +421,7 @@ const Sidebar = () => {
                       </span>
                       <span className="menu-title fs-6">Track My Ticket</span>
                     </NavLink>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             )}

@@ -9,6 +9,7 @@ import { NavLink } from "react-router-dom";
 import LogoutModal from "./LogoutModal";
 import SocketService from "../services/SocketService";
 import { motion, AnimatePresence } from "framer-motion";
+import { initFirebaseMessaging } from "../services/firebaseMessaging";
 import "../assets/css/profile-dropdown.css";
 import "../assets/css/dark-mode.css";
 import "../assets/css/dark-mode-animations.css";
@@ -16,7 +17,17 @@ import "../assets/css/dark-mode-animations.css";
 const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [user] = useState(   JSON.parse(localStorage.getItem("loggedUser")) || null );
+  const [user] = useState(() => {
+    try {
+      const userStr = localStorage.getItem("loggedUser");
+      if (userStr && userStr !== "undefined" && userStr.startsWith("{")) {
+        return JSON.parse(userStr);
+      }
+    } catch (e) {
+      console.error("Error parsing loggedUser in Header", e);
+    }
+    return null;
+  });
   
   // Get user picture with fallback
   const getUserPicture = (user) => {
@@ -25,6 +36,7 @@ const Header = () => {
  
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [showNotificationDropdown, setShowNotificationDropdown] =
     useState(false);
@@ -33,6 +45,7 @@ const Header = () => {
   const [isDarkMode, setIsDarkMode] = useState(
     localStorage.getItem("darkMode") === "true" || false
   );
+  const [showNotificationPermission, setShowNotificationPermission] = useState(false);
   const profileDropdownTimeoutRef = useRef(null);
   const notificationDropdownTimeoutRef = useRef(null);
 
@@ -171,15 +184,32 @@ const Header = () => {
   };
 
   useEffect(() => {
-    if(!SocketService.isConnected()){
-      SocketService.emit('user-connected',user);
+    if(!SocketService.checkConnection()){
+      SocketService.connect();
+      // Wait for connection before emitting
+      setTimeout(() => {
+        if (SocketService.checkConnection()) {
+          SocketService.emit('user-connected', user);
+        }
+      }, 1000);
+    } else {
+      SocketService.emit('user-connected', user);
     }
-    // SocketService.SocketService();
+    
     if(!user){
       navigate("/login");
     } else {
       // Fetch notifications on mount
       getNotifications();
+      getProfile();
+      
+      // Check for notification permission
+      if ("Notification" in window && Notification.permission === "default") {
+        // Show permission request after a short delay
+        setTimeout(() => {
+          setShowNotificationPermission(true);
+        }, 3000);
+      }
     }
     // Apply dark mode on component mount
     if (isDarkMode) {
@@ -188,6 +218,69 @@ const Header = () => {
       document.body.classList.remove("dark-mode");
     }
   }, [isDarkMode, user]);
+
+  const handleNotificationPermission = async (allowed) => {
+    
+    if (allowed) {
+      try {
+        const token = await initFirebaseMessaging();
+        if (token) {
+          // Send token to backend
+          await ApiService.request({
+            method: "POST",
+            url: "updateDeviceToken",
+            data: { device_token: token }
+          });
+          toast.success("Notifications enabled!");
+        } else {
+          toast.info("Could not enable notifications. Please check your browser settings.");
+        }
+      } catch (error) {
+        console.error("Error enabling notifications:", error);
+      }
+    }
+    
+    setShowNotificationPermission(false);
+  };
+
+  // Notification Permission Modal
+  const NotificationPermissionModal = () => (
+    <div 
+      className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+      style={{ zIndex: 1060, backgroundColor: 'rgba(0,0,0,0.5)' }}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        className="bg-white rounded-4 p-4 shadow-lg text-center"
+        style={{ maxWidth: '400px', width: '90%' }}
+      >
+        <div className="mb-3">
+          <div className="d-inline-flex align-items-center justify-content-center bg-light rounded-circle p-3 mb-3">
+            <i className="bi bi-bell-fill text-primary fs-2"></i>
+          </div>
+          <h4 className="fw-bold mb-2">Enable Notifications</h4>
+          <p className="text-muted mb-4">
+            Stay updated with real-time alerts for messages, case updates, and lawyer responses.
+          </p>
+        </div>
+        <div className="d-flex gap-2">
+          <button 
+            className="btn btn-light flex-fill fw-semibold py-2"
+            onClick={() => handleNotificationPermission(false)}
+          >
+            Not Now
+          </button>
+          <button 
+            className="btn btn-primary flex-fill fw-semibold py-2"
+            onClick={() => handleNotificationPermission(true)}
+          >
+            Allow
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
 
   const getNotifications = async () => {
     try {
@@ -249,6 +342,24 @@ const Header = () => {
       setUnreadCount(0);
     } finally {
       setLoadingNotifications(false);
+    }
+  };
+  const getProfile = async () => {
+    try {
+      const response = await ApiService.request({
+        method: "GET",
+        url: "getProfile",
+      });
+      const data = response.data;
+      if (data.status) {
+
+        setUnreadChatCount(data.data.chat_unread);
+        // setUnreadCount(data.data.unread_notifications);
+      } else {
+        setUnreadChatCount(0);
+      }
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
     }
   };
 
@@ -1193,6 +1304,9 @@ const Header = () => {
             <NavLink to="/chat" className="text-decoration-none">
               <div className="modern-icon-container">
                 <i className="bi bi-chat-dots modern-icon"></i>
+                {unreadChatCount > 0 && (
+                  <span className="chat-counter">{unreadChatCount > 9 ? '9+' : unreadChatCount}</span>
+                )}
               </div>
             </NavLink>
 
@@ -1237,6 +1351,9 @@ const Header = () => {
         onClose={handleLogoutCancel}
         onConfirm={handleLogoutConfirm}
       />
+      
+      {/* Notification Permission Modal */}
+      {showNotificationPermission && <NotificationPermissionModal />}
     </div>
   );
 };

@@ -6,14 +6,27 @@ import Loader from "../components/Loader";
 
 const Account = () => {
   const navigate = useNavigate();
-  const admin= JSON.parse(localStorage.getItem('admin'));
+  const admin = (() => {
+    try {
+      const adminStr = localStorage.getItem('admin');
+      if (adminStr && adminStr !== 'undefined' && adminStr.startsWith('{')) {
+        return JSON.parse(adminStr);
+      }
+    } catch (e) {
+      console.error("Error parsing admin in Account", e);
+    }
+    return null;
+  })();
 
   // Load data from localStorage
   const loadFromLocalStorage = (key, defaultValue) => {
     try {
       const saved = localStorage.getItem(key);
-      if (saved) {
-        return JSON.parse(saved);
+      if (saved && saved !== 'undefined') {
+        if (saved.startsWith('{') || saved.startsWith('[') || saved.startsWith('"')) {
+          return JSON.parse(saved);
+        }
+        return saved;
       }
     } catch (error) {
       console.error(`Error loading ${key} from localStorage:`, error);
@@ -90,7 +103,7 @@ const handleSubmit = async (e) => {
 };
 
   return (
-    <div className="d-flex flex-column flex-column-fluid">
+    <div className="d-flex flex-column flex-column-fluid mt-15 mx-5">
         <div id="kt_app_toolbar" className="app-toolbar py-3 py-lg-6">
             <div id="kt_app_toolbar_container" className="app-container container-fluid d-flex flex-stack">
                 <div className="page-title d-flex flex-column justify-content-center flex-wrap me-3">

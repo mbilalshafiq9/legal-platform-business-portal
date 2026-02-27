@@ -1,15 +1,37 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { Dropdown } from "react-bootstrap";
 import notificationProfile from "../../assets/images/notification-profile.png";
+import ApiService from "../../services/ApiService";
+
+// Custom Toggle for Dropdown
+const CustomToggle = React.forwardRef(({ children, onClick }, ref) => (
+  <button
+    className="btn btn-light btn-sm rounded-circle text-center p-0 shadow-sm"
+    style={{ width: "32px", height: "32px", border: "none"  }}
+    ref={ref}
+    onClick={(e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onClick(e);
+    }}
+  >
+    {children}
+  </button>
+));
 
 const EmployeesList = () => {
   // Load data from localStorage
   const loadFromLocalStorage = (key, defaultValue) => {
     try {
       const saved = localStorage.getItem(key);
-      if (saved) {
-        return JSON.parse(saved);
+      if (saved && saved !== 'undefined') {
+        // Only parse if it looks like JSON
+        if (saved.startsWith('{') || saved.startsWith('[') || saved.startsWith('"')) {
+          return JSON.parse(saved);
+        }
+        return saved;
       }
     } catch (error) {
       console.error(`Error loading ${key} from localStorage:`, error);
@@ -27,83 +49,31 @@ const EmployeesList = () => {
 
   // Form states for Add New Team - Load from localStorage
   const savedFormData = loadFromLocalStorage("employees_formData", {
+    id: null,
     fullName: "",
     email: "",
     phone: "",
     location: "",
     role: "",
+    roleId: "",
     employeeId: "",
   });
   const [formData, setFormData] = useState(savedFormData);
 
-  // Default employee data
-  const defaultEmployees = [
-    {
-      id: 1,
-      name: "Shamra Joseph",
-      location: "Dubai UAE",
-      employeeId: "#26975PL",
-      email: "shamara@joseph.com",
-      phone: "+971 24 578 9472",
-      role: "HR Management",
-      profileImage: notificationProfile,
-    },
-    {
-      id: 2,
-      name: "Ahmed Hassan",
-      location: "Riyadh KSA",
-      employeeId: "#26976PL",
-      email: "ahmed@hassan.com",
-      phone: "+966 50 123 4567",
-      role: "Software Developer",
-      profileImage: notificationProfile,
-    },
-    {
-      id: 3,
-      name: "Sarah Wilson",
-      location: "London UK",
-      employeeId: "#26977PL",
-      email: "sarah@wilson.com",
-      phone: "+44 20 1234 5678",
-      role: "Project Manager",
-      profileImage: notificationProfile,
-    },
-    {
-      id: 4,
-      name: "Mohammed Ali",
-      location: "Cairo Egypt",
-      employeeId: "#26978PL",
-      email: "mohammed@ali.com",
-      phone: "+20 10 1234 5678",
-      role: "Designer",
-      profileImage: notificationProfile,
-    },
-    {
-      id: 5,
-      name: "Emma Thompson",
-      location: "New York USA",
-      employeeId: "#26979PL",
-      email: "emma@thompson.com",
-      phone: "+1 555 123 4567",
-      role: "Marketing Manager",
-      profileImage: notificationProfile,
-    },
-    {
-      id: 6,
-      name: "Omar Khalil",
-      location: "Beirut Lebanon",
-      employeeId: "#26980PL",
-      email: "omar@khalil.com",
-      phone: "+961 70 123 456",
-      role: "Sales Executive",
-      profileImage: notificationProfile,
-    },
-  ];
-
-  // Load employees from localStorage or use defaults
   const [employees, setEmployees] = useState(
-    loadFromLocalStorage("employees_list", defaultEmployees)
+    loadFromLocalStorage("employees_list", [])
   );
+  const [loading, setLoading] = useState(false);
+  const [showRolesModal, setShowRolesModal] = useState(false);
+  const [roles, setRoles] = useState([]);
+  const [permissions, setPermissions] = useState([]);
+  const [roleForm, setRoleForm] = useState({
+    id: null,
+    name: "",
+    description: "",
+    permission_ids: [],
+    selectedRoleId: null,
+  });
 
   // Save employees to localStorage whenever they change
   useEffect(() => {
@@ -117,6 +87,60 @@ const EmployeesList = () => {
     }
   }, [employees, searchTerm, showAddEmployee, formData]);
 
+  const fetchTeams = async () => {
+    try {
+      setLoading(true);
+      const response = await ApiService.request({
+        method: "GET",
+        url: "getTeams",
+      });
+      const data = response.data;
+      if (data.status && data.data && data.data.teams) {
+        const mapped = data.data.teams.map((t) => ({
+          id: t.id,
+          name: t.name,
+          location: t.location || "Not specified",
+          employeeId: t.employee_code || "",
+          email: t.email || "",
+          phone: t.phone || "",
+          role: t.role || "Not specified",
+          roleId: t.role_id || "",
+          profileImage: notificationProfile,
+          permissions: t.permissions || [],
+        }));
+        setEmployees(mapped);
+      }
+    } catch (error) {
+      console.error("Error fetching teams", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTeams();
+    fetchRolesAndPermissions();
+  }, []);
+
+  const fetchRolesAndPermissions = async () => {
+    try {
+      const [permRes, rolesRes] = await Promise.all([
+        ApiService.request({ method: "GET", url: "getTeamPermissions" }),
+        ApiService.request({ method: "GET", url: "getTeamRoles" }),
+      ]);
+      const permData = permRes.data;
+      const rolesData = rolesRes.data;
+      if (permData.status && permData.data?.permissions) {
+        setPermissions(permData.data.permissions);
+      }
+      if (rolesData.status && rolesData.data?.roles) {
+        setRoles(rolesData.data.roles);
+      }
+    } catch (error) {
+      console.error("Error fetching roles/permissions", error);
+    }
+  };
+
   const filteredEmployees = employees.filter(
     (employee) =>
       employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -125,7 +149,7 @@ const EmployeesList = () => {
   );
 
   const handleEmployeeClick = (employeeId) => {
-    navigate(`/employees/${employeeId}`);
+    // navigate(`/employees/${employeeId}`);
   };
 
   const handleInputChange = (field, value) => {
@@ -135,7 +159,47 @@ const EmployeesList = () => {
     }));
   };
 
-  const handleAddEmployee = (e) => {
+  const handleEditEmployee = (employee, e) => {
+    e.stopPropagation();
+    setFormData({
+      id: employee.id,
+      fullName: employee.name,
+      email: employee.email,
+      phone: employee.phone,
+      location: employee.location === "Not specified" ? "" : employee.location,
+      role: employee.role === "Not specified" ? "" : employee.role,
+      roleId: employee.roleId,
+      employeeId: employee.employeeId,
+    });
+    setShowAddEmployee(true);
+  };
+
+  const handleDeleteEmployee = async (employeeId, e) => {
+    e.stopPropagation();
+    if (!window.confirm("Are you sure you want to delete this team member?")) {
+      return;
+    }
+
+    try {
+      const response = await ApiService.request({
+        method: "POST",
+        url: "deleteTeam",
+        data: { id: employeeId },
+      });
+      const data = response.data;
+      if (data.status) {
+        setEmployees((prev) => prev.filter((e) => e.id !== employeeId));
+        toast.success(data.message || "Team member deleted successfully");
+      } else {
+        toast.error(data.message || "Failed to delete team member");
+      }
+    } catch (error) {
+      console.error("Error deleting team member", error);
+      toast.error("Failed to delete team member");
+    }
+  };
+
+  const handleAddEmployee = async (e) => {
     e.preventDefault();
     
     // Validate required fields
@@ -147,35 +211,80 @@ const EmployeesList = () => {
     // Generate employee ID if not provided
     const employeeId = formData.employeeId.trim() || `#${Date.now()}PL`;
 
-    const newEmployee = {
-      id: Date.now(),
-      name: formData.fullName.trim(),
-      location: formData.location.trim() || "Not specified",
-      employeeId: employeeId,
-      email: formData.email.trim(),
-      phone: formData.phone.trim(),
-      role: formData.role || "Not specified",
-      profileImage: notificationProfile,
-    };
+    try {
+      const selectedRole = roles.find((r) => r.id == formData.roleId);
+      const selectedPermissions = selectedRole
+        ? (selectedRole.permissions || []).map((p) => p.id)
+        : [];
 
-    // Add new employee to the list
-    const updatedEmployees = [...employees, newEmployee];
-    setEmployees(updatedEmployees);
+      const payload = {
+        name: formData.fullName.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        location: formData.location.trim() || "",
+        employee_code: employeeId,
+        role: selectedRole ? selectedRole.name : formData.role,
+        role_id: formData.roleId || null,
+        permissions: selectedPermissions,
+      };
 
-    toast.success("Employee added successfully!");
+      if (formData.id) {
+        payload.id = formData.id;
+      }
+
+      const response = await ApiService.request({
+        method: "POST",
+        url: "saveTeam",
+        data: payload,
+      });
+      const data = response.data;
+      if (data.status && data.data && data.data.team) {
+        const t = data.data.team;
+        const savedEmployee = {
+          id: t.id,
+          name: t.name,
+          location: t.location || "Not specified",
+          employeeId: t.employee_code || employeeId,
+          email: t.email || "",
+          phone: t.phone || "",
+          role: t.role || "Not specified",
+          roleId: t.role_id || "",
+          profileImage: notificationProfile,
+          permissions: t.permissions || [],
+        };
+
+        setEmployees((prev) => {
+          if (formData.id) {
+            return prev.map((e) => (e.id === formData.id ? savedEmployee : e));
+          } else {
+            return [...prev, savedEmployee];
+          }
+        });
+        toast.success(data.message || (formData.id ? "Employee updated successfully!" : "Employee added successfully!"));
+      } else {
+        toast.error(data.message || "Failed to save employee");
+        return;
+      }
+    } catch (error) {
+      console.error("Error saving employee", error);
+      toast.error("Failed to save employee. Please try again.");
+      return;
+    }
     
     // Reset form and close offcanvas
     const emptyFormData = {
+      id: null,
       fullName: "",
       email: "",
       phone: "",
       location: "",
       role: "",
+      roleId: "",
       employeeId: "",
     };
     setFormData(emptyFormData);
     setShowAddEmployee(false);
-    // Clear form data from localStorage when employee is added
+    // Clear form data from localStorage
     try {
       localStorage.setItem("employees_formData", JSON.stringify(emptyFormData));
     } catch (error) {
@@ -221,39 +330,50 @@ const EmployeesList = () => {
               />
             </div>
 
-            {/* <button 
-              className="btn btn-white px-4 py-3 d-flex align-items-center gap-2 employees-filter-button"
-              style={{ 
-                borderRadius: "50px",
-                border: "1px solid #e0e0e0",
-                fontSize: "14px",
-                fontWeight: "500",
-                backgroundColor: "#fff",
-                color: "#000"
-              }}
-            >
-              <i className="bi bi-sliders2"></i>
-              Filter
-            </button> */}
-
-            <button
-              className="btn btn-white px-4 py-3 d-flex align-items-center gap-2 employees-add-button"
-              style={{
-                borderRadius: "50px",
-                border: "none",
-                fontSize: "14px",
-                fontWeight: "500",
-                backgroundColor: "#ffffff",
-                color: "#000000",
-              }}
-              onClick={() => {
-                setShowAddEmployee(true);
-                // Don't reset form - keep saved form data for user convenience
-              }}
-            >
-              <i className="bi bi-plus-circle-fill"></i>
-              Add New Team
-            </button>
+            <div className="d-flex gap-2">
+              <button
+                className="btn btn-white px-4 py-3 d-flex align-items-center gap-2 employees-add-button"
+                style={{
+                  borderRadius: "50px",
+                  border: "none",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  backgroundColor: "#ffffff",
+                  color: "#000000",
+                }}
+                onClick={() => {
+                  setFormData({
+                    id: null,
+                    fullName: "",
+                    email: "",
+                    phone: "",
+                    location: "",
+                    role: "",
+                    roleId: "",
+                    employeeId: "",
+                  });
+                  setShowAddEmployee(true);
+                }}
+              >
+                <i className="bi bi-plus-circle-fill"></i>
+                Add New Team
+              </button>
+              <button
+                className="btn btn-outline-dark px-4 py-3 d-flex align-items-center gap-2"
+                style={{
+                  borderRadius: "50px",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                }}
+                onClick={async () => {
+                  await fetchRolesAndPermissions();
+                  setShowRolesModal(true);
+                }}
+              >
+                <i className="bi bi-shield-lock-fill"></i>
+                Roles &amp; Permissions
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -261,7 +381,31 @@ const EmployeesList = () => {
       <div className="container-fluid px-4 py-4">
         {/* Employees Grid */}
         <div className="row">
-          {filteredEmployees.map((employee, index) => (
+          {loading && (
+            <div
+              className="col-12 d-flex align-items-center justify-content-center"
+              style={{ minHeight: "300px" }}
+            >
+              <div className="spinner-border text-primary" role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
+            </div>
+          )}
+
+          {!loading && filteredEmployees.length === 0 && (
+            <div
+              className="col-12 d-flex align-items-center justify-content-center"
+              style={{ minHeight: "300px" }}
+            >
+              <div className="text-center">
+                <h5 className="text-muted">No team members found</h5>
+              </div>
+            </div>
+          )}
+
+          {!loading &&
+            filteredEmployees.length > 0 &&
+            filteredEmployees.map((employee, index) => (
             <div
               key={employee.id}
               className="col-lg-4 col-md-6 mb-4"
@@ -270,9 +414,30 @@ const EmployeesList = () => {
             >
               <div
                 className="card h-100 portal-card-hover"
-                style={{ borderRadius: "12px", cursor: "pointer" }}
+                style={{ borderRadius: "12px", cursor: "pointer", position: "relative" }}
                 onClick={() => handleEmployeeClick(employee.id)}
               >
+                {/* Edit/Delete Actions */}
+                <div className="position-absolute top-0 end-0 p-3" style={{ zIndex: 10 }}>
+                  <Dropdown align="end" onClick={(e) => e.stopPropagation()}>
+                    <Dropdown.Toggle as={CustomToggle}>
+                      <i className="bi bi-three-dots-vertical"></i>
+                    </Dropdown.Toggle>
+
+                    <Dropdown.Menu>
+                      <Dropdown.Item onClick={(e) => handleEditEmployee(employee, e)}>
+                        <i className="bi bi-pencil me-2"></i> Edit
+                      </Dropdown.Item>
+                      <Dropdown.Item 
+                        className="text-danger" 
+                        onClick={(e) => handleDeleteEmployee(employee.id, e)}
+                      >
+                        <i className="bi bi-trash me-2"></i> Delete
+                      </Dropdown.Item>
+                    </Dropdown.Menu>
+                  </Dropdown>
+                </div>
+
                 <div className="card-body p-4">
                   <div className="d-flex align-items-start mb-3">
                     <div className="symbol symbol-60px me-3">
@@ -431,7 +596,206 @@ const EmployeesList = () => {
         </div>
       </div>
 
-      {/* Add New Employee Offcanvas */}
+      {/* Roles & Permissions Modal */}
+      {showRolesModal && (
+        <>
+          <div
+            className="offcanvas offcanvas-end show"
+            tabIndex="-1"
+            style={{
+              position: "fixed",
+              top: 0,
+              right: 0,
+              bottom: 0,
+              visibility: "visible",
+              width: "633px",
+              transition: "all 0.3s ease-out",
+              borderRadius: "13px",
+              margin: "20px",
+              zIndex: 1045,
+              backgroundColor: "#fff",
+            }}
+          >
+            <div className="offcanvas-header border-bottom">
+              <h5 className="offcanvas-title fw-bold">Roles &amp; Permissions</h5>
+              <button
+                type="button"
+                className="btn-close"
+                onClick={() => setShowRolesModal(false)}
+              ></button>
+            </div>
+            <div className="offcanvas-body p-4" style={{ overflowY: "auto" }}>
+              <div className="mb-4">
+                <label className="form-label fw-semibold">Role Name</label>
+                <input
+                  type="text"
+                  className="form-control portal-form-hover"
+                  placeholder="Enter role name"
+                  value={roleForm.name}
+                  onChange={(e) =>
+                    setRoleForm((prev) => ({ ...prev, name: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="mb-4">
+                <label className="form-label fw-semibold">Description</label>
+                <textarea
+                  className="form-control portal-form-hover"
+                  rows="3"
+                  placeholder="Describe this role"
+                  value={roleForm.description}
+                  onChange={(e) =>
+                    setRoleForm((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
+                ></textarea>
+              </div>
+              <div className="mb-4">
+                <label className="form-label fw-semibold">
+                  Permissions
+                </label>
+                <div className="row">
+                  {permissions.map((perm) => (
+                    <div className="col-12 col-md-6 mb-2" key={perm.id}>
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          id={`perm-${perm.id}`}
+                          checked={roleForm.permission_ids.includes(perm.id)}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            setRoleForm((prev) => {
+                              const current = prev.permission_ids || [];
+                              if (checked) {
+                                return {
+                                  ...prev,
+                                  permission_ids: [...current, perm.id],
+                                };
+                              }
+                              return {
+                                ...prev,
+                                permission_ids: current.filter(
+                                  (id) => id !== perm.id
+                                ),
+                              };
+                            });
+                          }}
+                        />
+                        <label
+                          className="form-check-label"
+                          htmlFor={`perm-${perm.id}`}
+                        >
+                          {perm.label}{" "}
+                          {perm.module ? `(${perm.module})` : ""}
+                        </label>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="form-label fw-semibold">
+                  Existing Roles
+                </label>
+                <ul className="list-group">
+                  {roles.map((role) => (
+                    <li
+                      key={role.id}
+                      className="list-group-item d-flex justify-content-between align-items-center"
+                      style={{ cursor: "pointer" }}
+                      onClick={() =>
+                        setRoleForm({
+                          id: role.id,
+                          name: role.name,
+                          description: role.description || "",
+                          permission_ids: (role.permissions || []).map(
+                            (p) => p.id
+                          ),
+                        })
+                      }
+                    >
+                      <span>{role.name}</span>
+                      <span className="badge bg-light text-dark">
+                        {(role.permissions || []).length} permissions
+                      </span>
+                    </li>
+                  ))}
+                  {roles.length === 0 && (
+                    <li className="list-group-item text-muted">
+                      No roles created yet.
+                    </li>
+                  )}
+                </ul>
+              </div>
+
+              <div className="text-end">
+                <button
+                  type="button"
+                  className="btn btn-light me-3"
+                  onClick={() =>
+                    setRoleForm({
+                      id: null,
+                      name: "",
+                      description: "",
+                      permission_ids: [],
+                    })
+                  }
+                >
+                  Reset
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-dark"
+                  onClick={async () => {
+                    if (!roleForm.name.trim()) {
+                      toast.error("Role name is required");
+                      return;
+                    }
+                    try {
+                      const response = await ApiService.request({
+                        method: "POST",
+                        url: "saveTeamRole",
+                        data: roleForm,
+                      });
+                      const data = response.data;
+                      if (data.status && data.data?.role) {
+                        const saved = data.data.role;
+                        setRoles((prev) => {
+                          const exists = prev.find((r) => r.id === saved.id);
+                          if (exists) {
+                            return prev.map((r) =>
+                              r.id === saved.id ? saved : r
+                            );
+                          }
+                          return [...prev, saved];
+                        });
+                        toast.success(data.message || "Role saved successfully");
+                      } else {
+                        toast.error(data.message || "Failed to save role");
+                      }
+                    } catch (error) {
+                      console.error("Error saving role", error);
+                      toast.error("Failed to save role. Please try again.");
+                    }
+                  }}
+                >
+                  Save Role
+                </button>
+              </div>
+            </div>
+          </div>
+          <div
+            className="offcanvas-backdrop fade show"
+            onClick={() => setShowRolesModal(false)}
+          ></div>
+        </>
+      )}
+
+      {/* Add New/Edit Employee Offcanvas */}
       <div
         className={`offcanvas offcanvas-end ${showAddEmployee ? "show" : ""}`}
         tabIndex="-1"
@@ -445,7 +809,9 @@ const EmployeesList = () => {
         }}
       >
         <div className="offcanvas-header border-bottom">
-          <h5 className="offcanvas-title fw-bold">Add New Team</h5>
+          <h5 className="offcanvas-title fw-bold">
+            {formData.id ? "Edit Team Member" : "Add New Team"}
+          </h5>
           <button
             type="button"
             className="btn-close"
@@ -508,16 +874,21 @@ const EmployeesList = () => {
                 <label className="form-label fw-semibold">Role</label>
                 <select
                   className="form-select portal-form-hover"
-                  value={formData.role}
-                  onChange={(e) => handleInputChange("role", e.target.value)}
+                  value={formData.roleId || ""}
+                  onChange={(e) => {
+                    handleInputChange("roleId", e.target.value);
+                    const selectedRole = roles.find(r => r.id == e.target.value);
+                    if (selectedRole) {
+                        handleInputChange("role", selectedRole.name);
+                    }
+                  }}
                 >
                   <option value="">Select role</option>
-                  <option value="HR Management">HR Management</option>
-                  <option value="Software Developer">Software Developer</option>
-                  <option value="Project Manager">Project Manager</option>
-                  <option value="Designer">Designer</option>
-                  <option value="Marketing Manager">Marketing Manager</option>
-                  <option value="Sales Executive">Sales Executive</option>
+                  {roles.map((role) => (
+                    <option key={role.id} value={role.id}>
+                      {role.name}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className="mb-3">
@@ -551,7 +922,7 @@ const EmployeesList = () => {
                 backgroundColor: "#474747",
               }}
             >
-              Add Employee
+              {formData.id ? "Update Team Member" : "Add Team Member"}
             </button>
           </div>
         </div>
