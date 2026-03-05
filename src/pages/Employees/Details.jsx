@@ -7,9 +7,7 @@ import "./detail.css";
 
 const EmployeeDetails = () => {
   const { id } = useParams();
-  const [showEditProfile, setShowEditProfile] = useState(
-    loadFromLocalStorage(`employee_${id}_showEditProfile`, false)
-  );
+  const [showEditProfile, setShowEditProfile] = useState(false);
 
   // Load data from localStorage
   const loadFromLocalStorage = (key, defaultValue) => {
@@ -63,30 +61,25 @@ const EmployeeDetails = () => {
     loadFromLocalStorage(`employee_additionalInfo_${id}`, employee.additionalInfo || "")
   );
   
-  // Edit form states - Load from localStorage or use employee data
-  const savedEditFormData = loadFromLocalStorage(`employee_${id}_editFormData`, null);
-  const [editFormData, setEditFormData] = useState(
-    savedEditFormData || {
-      name: employee.name,
-      location: employee.location,
-      description: employee.description,
-      bannerImage: employee.bannerImage,
-      profileImage: employee.profileImage,
-      socialMedia: { ...employee.socialMedia },
-    }
-  );
+  // Edit form states
+  const [editFormData, setEditFormData] = useState({
+    name: employee.name,
+    location: employee.location,
+    description: employee.description,
+    bannerImage: employee.bannerImage,
+    profileImage: employee.profileImage,
+    socialMedia: { ...employee.socialMedia },
+  });
 
   // Save employee details to localStorage
   useEffect(() => {
     try {
       localStorage.setItem(`employee_details_${id}`, JSON.stringify(employee));
       localStorage.setItem(`employee_additionalInfo_${id}`, JSON.stringify(additionalInfo));
-      localStorage.setItem(`employee_${id}_showEditProfile`, JSON.stringify(showEditProfile));
-      localStorage.setItem(`employee_${id}_editFormData`, JSON.stringify(editFormData));
     } catch (error) {
       console.error("Error saving employee details to localStorage:", error);
     }
-  }, [employee, additionalInfo, id, showEditProfile, editFormData]);
+  }, [employee, additionalInfo, id]);
 
   // Update edit form when employee changes
   useEffect(() => {

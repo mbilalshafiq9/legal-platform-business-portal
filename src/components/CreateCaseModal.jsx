@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { toast } from "react-toastify";
 import ApiService from "../services/ApiService";
 
@@ -14,6 +14,15 @@ const CreateCaseModal = ({ show, onClose, onSuccess }) => {
 
   const [lawyerCount, setLawyerCount] = useState(null);
   const [checkingLawyers, setCheckingLawyers] = useState(false);
+  const [showJurisdictionDropdown, setShowJurisdictionDropdown] = useState(false);
+  const [jurisdictionSearch, setJurisdictionSearch] = useState("");
+  const jurisdictionRef = useRef(null);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [categorySearch, setCategorySearch] = useState("");
+  const categoryRef = useRef(null);
+  const [showSubCategoryDropdown, setShowSubCategoryDropdown] = useState(false);
+  const [subCategorySearch, setSubCategorySearch] = useState("");
+  const subCategoryRef = useRef(null);
 
   const initialFormState = {
     jurisdiction: "",
@@ -150,6 +159,24 @@ const CreateCaseModal = ({ show, onClose, onSuccess }) => {
 
     fetchSubCategories();
   }, [formData.category]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (jurisdictionRef.current && !jurisdictionRef.current.contains(event.target)) {
+        setShowJurisdictionDropdown(false);
+      }
+      if (categoryRef.current && !categoryRef.current.contains(event.target)) {
+        setShowCategoryDropdown(false);
+      }
+      if (subCategoryRef.current && !subCategoryRef.current.contains(event.target)) {
+        setShowSubCategoryDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({
@@ -293,27 +320,83 @@ const CreateCaseModal = ({ show, onClose, onSuccess }) => {
                 {/* Row 1: Jurisdiction & Consultant Type */}
                 <div className="row g-3 mb-3">
                   <div className="col-md-6">
-                    <div className="position-relative">
-                      <select
-                        className="form-select form-select-lg"
-                        value={formData.jurisdiction}
-                        onChange={(e) => handleChange("jurisdiction", e.target.value)}
+                    <div className="position-relative" ref={jurisdictionRef}>
+                      <button
+                        type="button"
+                        className="form-select form-select-lg d-flex align-items-center justify-content-between"
+                        onClick={() => {
+                          if (!loadingDropdowns) {
+                            setShowJurisdictionDropdown(!showJurisdictionDropdown);
+                            setJurisdictionSearch("");
+                          }
+                        }}
                         disabled={loadingDropdowns}
                         style={{
                           height: "60px",
                           borderRadius: "12px",
                           border: "1px solid #E0E0E0",
                           fontSize: "16px",
-                          color: formData.jurisdiction ? "#000" : "#6c757d"
+                          color: formData.jurisdiction ? "#000" : "#6c757d",
+                          textAlign: "left",
+                          paddingLeft: "12px",
+                          paddingRight: "40px",
+                          width: "100%"
                         }}
                       >
-                        <option value="" className="text-muted">Select Jurisdiction</option>
-                        {jurisdictions.map((jurisdiction) => (
-                          <option key={jurisdiction.id} value={jurisdiction.id} style={{color: "#000"}}>
-                            {jurisdiction.name}
-                          </option>
-                        ))}
-                      </select>
+                        <span>
+                          {formData.jurisdiction
+                            ? jurisdictions.find(j => j.id === parseInt(formData.jurisdiction))?.name || "Select Jurisdiction"
+                            : "Select Jurisdiction"}
+                        </span>
+                        {/* <i className={`bi bi-chevron-${showJurisdictionDropdown ? "up" : "down"} position-absolute end-0 translate-middle-y me-3 text-gray-600`} style={{ top: "50%" }}></i> */}
+                      </button>
+                      {showJurisdictionDropdown && (
+                        <div 
+                          className="position-absolute bg-white border rounded shadow-lg"
+                          style={{ 
+                            zIndex: 1050, 
+                            width: "100%", 
+                            maxHeight: "300px", 
+                            top: "100%",
+                            marginTop: "8px"
+                          }}
+                        >
+                          <div className="p-2 border-bottom bg-white" style={{ position: "sticky", top: 0 }}>
+                            <input
+                              type="text"
+                              className="form-control"
+                              placeholder="Search jurisdiction..."
+                              value={jurisdictionSearch}
+                              onChange={(e) => setJurisdictionSearch(e.target.value)}
+                            />
+                          </div>
+                          <div style={{ maxHeight: "240px", overflowY: "auto" }}>
+                            {jurisdictions
+                              .filter(j => j.name.toLowerCase().includes(jurisdictionSearch.toLowerCase()))
+                              .map((jurisdiction) => (
+                                <button
+                                  key={jurisdiction.id}
+                                  type="button"
+                                  className="btn btn-light w-100 text-start px-3 py-2 border-0"
+                                  onClick={() => {
+                                    handleChange("jurisdiction", jurisdiction.id.toString());
+                                    setShowJurisdictionDropdown(false);
+                                    setJurisdictionSearch("");
+                                  }}
+                                  style={{ 
+                                    fontSize: "0.95rem",
+                                    backgroundColor: formData.jurisdiction === String(jurisdiction.id) ? "#f0f0f0" : "#fff"
+                                  }}
+                                >
+                                  {jurisdiction.name}
+                                </button>
+                              ))}
+                            {jurisdictions.filter(j => j.name.toLowerCase().includes(jurisdictionSearch.toLowerCase())).length === 0 && (
+                              <div className="p-3 text-center text-muted">No results</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="col-md-6">
@@ -345,51 +428,163 @@ const CreateCaseModal = ({ show, onClose, onSuccess }) => {
                 {/* Row 2: Category & Sub Category */}
                 <div className="row g-3 mb-3">
                   <div className="col-md-6">
-                    <div className="position-relative">
-                      <select
-                        className="form-select form-select-lg"
-                        value={formData.category}
-                        onChange={(e) => handleChange("category", e.target.value)}
+                    <div className="position-relative" ref={categoryRef}>
+                      <button
+                        type="button"
+                        className="form-select form-select-lg d-flex align-items-center justify-content-between"
+                        onClick={() => {
+                          if (!loadingDropdowns) {
+                            setShowCategoryDropdown(!showCategoryDropdown);
+                            setCategorySearch("");
+                          }
+                        }}
                         disabled={loadingDropdowns}
                         style={{
                           height: "60px",
                           borderRadius: "12px",
                           border: "1px solid #E0E0E0",
                           fontSize: "16px",
-                          color: formData.category ? "#000" : "#6c757d"
+                          color: formData.category ? "#000" : "#6c757d",
+                          textAlign: "left",
+                          paddingLeft: "12px",
+                          paddingRight: "40px",
+                          width: "100%"
                         }}
                       >
-                        <option value="">Select Category</option>
-                        {categories.map((category) => (
-                          <option key={category.id} value={category.id} style={{color: "#000"}}>
-                            {category.name}
-                          </option>
-                        ))}
-                      </select>
+                        <span>
+                          {formData.category
+                            ? categories.find(c => c.id === parseInt(formData.category))?.name || "Select Category"
+                            : "Select Category"}
+                        </span>
+                        {/* <i className={`bi bi-chevron-${showCategoryDropdown ? "up" : "down"} position-absolute end-0 translate-middle-y me-3 text-gray-600`} style={{ top: "50%" }}></i> */}
+                      </button>
+                      {showCategoryDropdown && (
+                        <div 
+                          className="position-absolute bg-white border rounded shadow-lg"
+                          style={{ 
+                            zIndex: 1050, 
+                            width: "100%", 
+                            maxHeight: "300px", 
+                            top: "100%",
+                            marginTop: "8px"
+                          }}
+                        >
+                          <div className="p-2 border-bottom bg-white" style={{ position: "sticky", top: 0 }}>
+                            <input
+                              type="text"
+                              className="form-control"
+                              placeholder="Search category..."
+                              value={categorySearch}
+                              onChange={(e) => setCategorySearch(e.target.value)}
+                            />
+                          </div>
+                          <div style={{ maxHeight: "240px", overflowY: "auto" }}>
+                            {categories
+                              .filter(c => c.name.toLowerCase().includes(categorySearch.toLowerCase()))
+                              .map((category) => (
+                                <button
+                                  key={category.id}
+                                  type="button"
+                                  className="btn btn-light w-100 text-start px-3 py-2 border-0"
+                                  onClick={() => {
+                                    handleChange("category", category.id.toString());
+                                    setShowCategoryDropdown(false);
+                                    setCategorySearch("");
+                                  }}
+                                  style={{ 
+                                    fontSize: "0.95rem",
+                                    backgroundColor: formData.category === String(category.id) ? "#f0f0f0" : "#fff"
+                                  }}
+                                >
+                                  {category.name}
+                                </button>
+                              ))}
+                            {categories.filter(c => c.name.toLowerCase().includes(categorySearch.toLowerCase())).length === 0 && (
+                              <div className="p-3 text-center text-muted">No results</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="col-md-6">
-                    <div className="position-relative">
-                      <select
-                        className="form-select form-select-lg"
-                        value={formData.subCategory}
-                        onChange={(e) => handleChange("subCategory", e.target.value)}
+                    <div className="position-relative" ref={subCategoryRef}>
+                      <button
+                        type="button"
+                        className="form-select form-select-lg d-flex align-items-center justify-content-between"
+                        onClick={() => {
+                          if (!loadingDropdowns && formData.category) {
+                            setShowSubCategoryDropdown(!showSubCategoryDropdown);
+                            setSubCategorySearch("");
+                          }
+                        }}
                         disabled={!formData.category || loadingDropdowns}
                         style={{
                           height: "60px",
                           borderRadius: "12px",
                           border: "1px solid #E0E0E0",
                           fontSize: "16px",
-                          color: formData.subCategory ? "#000" : "#6c757d"
+                          color: formData.subCategory ? "#000" : "#6c757d",
+                          textAlign: "left",
+                          paddingLeft: "12px",
+                          paddingRight: "40px",
+                          width: "100%"
                         }}
                       >
-                        <option value="">Select Sub Categories</option>
-                        {subCategories.map((subCategory) => (
-                          <option key={subCategory.id} value={subCategory.id} style={{color: "#000"}}>
-                            {subCategory.name}
-                          </option>
-                        ))}
-                      </select>
+                        <span>
+                          {formData.subCategory
+                            ? subCategories.find(s => s.id === parseInt(formData.subCategory))?.name || "Select Sub Categories"
+                            : "Select Sub Categories"}
+                        </span>
+                        {/* <i className={`bi bi-chevron-${showSubCategoryDropdown ? "up" : "down"} position-absolute end-0 translate-middle-y me-3 text-gray-600`} style={{ top: "50%" }}></i> */}
+                      </button>
+                      {showSubCategoryDropdown && (
+                        <div 
+                          className="position-absolute bg-white border rounded shadow-lg"
+                          style={{ 
+                            zIndex: 1050, 
+                            width: "100%", 
+                            maxHeight: "300px", 
+                            top: "100%",
+                            marginTop: "8px"
+                          }}
+                        >
+                          <div className="p-2 border-bottom bg-white" style={{ position: "sticky", top: 0 }}>
+                            <input
+                              type="text"
+                              className="form-control"
+                              placeholder="Search sub category..."
+                              value={subCategorySearch}
+                              onChange={(e) => setSubCategorySearch(e.target.value)}
+                            />
+                          </div>
+                          <div style={{ maxHeight: "240px", overflowY: "auto" }}>
+                            {subCategories
+                              .filter(s => s.name.toLowerCase().includes(subCategorySearch.toLowerCase()))
+                              .map((subCategory) => (
+                                <button
+                                  key={subCategory.id}
+                                  type="button"
+                                  className="btn btn-light w-100 text-start px-3 py-2 border-0"
+                                  onClick={() => {
+                                    handleChange("subCategory", subCategory.id.toString());
+                                    setShowSubCategoryDropdown(false);
+                                    setSubCategorySearch("");
+                                  }}
+                                  style={{ 
+                                    fontSize: "0.95rem",
+                                    backgroundColor: formData.subCategory === String(subCategory.id) ? "#f0f0f0" : "#fff"
+                                  }}
+                                >
+                                  {subCategory.name}
+                                </button>
+                              ))}
+                            {subCategories.filter(s => s.name.toLowerCase().includes(subCategorySearch.toLowerCase())).length === 0 && (
+                              <div className="p-3 text-center text-muted">No results</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

@@ -641,11 +641,11 @@ const HelpSupport = () => {
                   <div className="mb-3">
                     <i className="bi bi-telephone-fill fs-1 text-black"></i>
                   </div>
-                  <h4 className="fw-bold mb-2">+1 (555) 123-4567</h4>
+                  <h4 className="fw-bold mb-2">+971 56 555 6294</h4>
                   <p className="text-muted mb-4">Available 24/7</p>
                 </div>
                 <a
-                  href="tel:+15551234567"
+                  href="tel:+971565556294"
                   className="btn bg-black text-white rounded-pill w-100 py-3"
                 >
                   <i className="bi bi-telephone-fill me-2"></i>

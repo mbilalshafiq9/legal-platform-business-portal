@@ -42,13 +42,11 @@ const EmployeesList = () => {
   const [searchTerm, setSearchTerm] = useState(
     loadFromLocalStorage("employees_searchTerm", "")
   );
-  const [showAddEmployee, setShowAddEmployee] = useState(
-    loadFromLocalStorage("employees_showAddEmployee", false)
-  );
+  const [showAddEmployee, setShowAddEmployee] = useState(false);
   const navigate = useNavigate();
 
-  // Form states for Add New Team - Load from localStorage
-  const savedFormData = loadFromLocalStorage("employees_formData", {
+  // Form states for Add New Team
+  const [formData, setFormData] = useState({
     id: null,
     fullName: "",
     email: "",
@@ -57,8 +55,8 @@ const EmployeesList = () => {
     role: "",
     roleId: "",
     employeeId: "",
+    password: "",
   });
-  const [formData, setFormData] = useState(savedFormData);
 
   const [employees, setEmployees] = useState(
     loadFromLocalStorage("employees_list", [])
@@ -80,12 +78,10 @@ const EmployeesList = () => {
     try {
       localStorage.setItem("employees_list", JSON.stringify(employees));
       localStorage.setItem("employees_searchTerm", JSON.stringify(searchTerm));
-      localStorage.setItem("employees_showAddEmployee", JSON.stringify(showAddEmployee));
-      localStorage.setItem("employees_formData", JSON.stringify(formData));
     } catch (error) {
       console.error("Error saving employees data to localStorage:", error);
     }
-  }, [employees, searchTerm, showAddEmployee, formData]);
+  }, [employees, searchTerm]);
 
   const fetchTeams = async () => {
     try {
@@ -170,6 +166,7 @@ const EmployeesList = () => {
       role: employee.role === "Not specified" ? "" : employee.role,
       roleId: employee.roleId,
       employeeId: employee.employeeId,
+      password: "",
     });
     setShowAddEmployee(true);
   };
@@ -226,6 +223,7 @@ const EmployeesList = () => {
         role: selectedRole ? selectedRole.name : formData.role,
         role_id: formData.roleId || null,
         permissions: selectedPermissions,
+        password: formData.password,
       };
 
       if (formData.id) {
@@ -281,6 +279,7 @@ const EmployeesList = () => {
       role: "",
       roleId: "",
       employeeId: "",
+      password: "",
     };
     setFormData(emptyFormData);
     setShowAddEmployee(false);
@@ -351,6 +350,7 @@ const EmployeesList = () => {
                     role: "",
                     roleId: "",
                     employeeId: "",
+                    password: "",
                   });
                   setShowAddEmployee(true);
                 }}
@@ -847,6 +847,17 @@ const EmployeesList = () => {
                   value={formData.email}
                   onChange={(e) => handleInputChange("email", e.target.value)}
                   required
+                />
+              </div>
+              <div className="mb-3">
+                <label className="form-label fw-semibold">Password</label>
+                <input
+                  type="password"
+                  className="form-control portal-form-hover"
+                  placeholder={formData.id ? "Leave blank to keep current password" : "Enter password"}
+                  value={formData.password}
+                  onChange={(e) => handleInputChange("password", e.target.value)}
+                  required={!formData.id}
                 />
               </div>
               <div className="mb-3">

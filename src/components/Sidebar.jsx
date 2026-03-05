@@ -9,6 +9,26 @@ const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [permissions, setPermissions] = useState(null);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('permissions');
+      if (stored) {
+        setPermissions(JSON.parse(stored));
+      }
+    } catch (error) {
+      console.error("Error parsing permissions:", error);
+    }
+  }, []);
+
+  const hasPermission = (key) => {
+      console.log(permissions);
+
+    // If no permissions are stored, assume full access (regular user)
+    if (!permissions || permissions.length === 0) return true;
+    return permissions.some(p => p.key === key);
+  };
 
   const logout = () => {
     setShowLogoutModal(true);
@@ -213,6 +233,7 @@ const Sidebar = () => {
             data-kt-menu="true"
             data-kt-menu-expand="false"
           >
+            {hasPermission('view_dashboard') && (
             <div className="menu-item">
               <NavLink to="/dashboard" className="menu-link portal-nav-hover">
                 <span className="menu-icon">
@@ -223,7 +244,9 @@ const Sidebar = () => {
                 <span className="menu-title fs-6">Dashboard</span>
               </NavLink>
             </div>
+            )}
 
+            {hasPermission('view_post_question') && (
             <div className="menu-item">
               <NavLink to="/ask-question" className="menu-link portal-nav-hover">
                 <span className="menu-icon">
@@ -232,7 +255,9 @@ const Sidebar = () => {
                 <span className="menu-title fs-6">Post Question</span>
               </NavLink>
             </div>
+            )}
 
+            {hasPermission('view_my_lawyers') && (
             <div className="menu-item">
               <NavLink to="/my-lawyers" className="menu-link portal-nav-hover">
                 <span className="menu-icon">
@@ -273,7 +298,9 @@ const Sidebar = () => {
                 <span className="menu-title fs-6">My Lawyers</span>
               </NavLink>
             </div>
+            )}
 
+            {hasPermission('view_lawyers') && (
             <div className="menu-item">
               <NavLink to="/lawyers" className="menu-link portal-nav-hover">
                 <span className="menu-icon">
@@ -314,7 +341,9 @@ const Sidebar = () => {
                 <span className="menu-title fs-6">Lawyers</span>
               </NavLink>
             </div>
+            )}
 
+            {hasPermission('view_chat') && (
             <div className="menu-item">
               <NavLink to="/chat" className="menu-link portal-nav-hover">
                 <span className="menu-icon">
@@ -323,7 +352,9 @@ const Sidebar = () => {
                 <span className="menu-title fs-6">Chat</span>
               </NavLink>
             </div>
+            )}
 
+            {hasPermission('view_my_cases') && (
             <div className="menu-item">
               <NavLink to="/my-cases" className="menu-link portal-nav-hover">
                 <span className="menu-icon">
@@ -332,7 +363,9 @@ const Sidebar = () => {
                 <span className="menu-title fs-6">My Cases</span>
               </NavLink>
             </div>
+            )}
 
+            {hasPermission('manage_team') && (
             <div className="menu-item">
               <NavLink to="/employees" className="menu-link portal-nav-hover">
                 <span className="menu-icon">
@@ -341,7 +374,9 @@ const Sidebar = () => {
                 <span className="menu-title fs-6">Teams</span>
               </NavLink>
             </div>
+            )}
 
+            {hasPermission('manage_account') && (
             <div className="menu-item">
               <NavLink to="/account" className="menu-link portal-nav-hover">
                 <span className="menu-icon">
@@ -350,80 +385,85 @@ const Sidebar = () => {
                 <span className="menu-title fs-6">Account Settings</span>
               </NavLink>
             </div>
+            )}
 
             {/* Help & Support - Show as dropdown when expanded, separate items when collapsed */}
-            {isCollapsed ? (
-              <>
-                <div className="menu-item">
-                  <NavLink to="/help-support" className="menu-link portal-nav-hover">
-                    <span className="menu-icon">
-                      <i class="bi bi-headset"></i>
-                    </span>
-                    <span className="menu-title fs-6">Help & Support</span>
-                  </NavLink>
-                </div>
-                {/* <div className="menu-item">
-                  <NavLink to="/track-my-ticket" className="menu-link portal-nav-hover">
-                    <span className="menu-icon">
-                      <i class="bi bi-ticket-perforated"></i>
-                    </span>
-                    <span className="menu-title fs-6">Track My Ticket</span>
-                  </NavLink>
-                </div> */}
-              </>
-            ) : (
-              <div className="menu-item">
-                <div
-                  className="menu-link portal-nav-hover"
-                  onClick={() => toggleDropdown("help-support")}
-                  style={{ cursor: "pointer" }}
-                >
-                  <span className="menu-icon">
-                    <i class="bi bi-headset"></i>
-                  </span>
-                  <span className="menu-title fs-6">Help & Support</span>
-                  <span className="menu-arrow">
-                    <i
-                      className={`bi bi-chevron-${
-                        openDropdown === "help-support" ? "up" : "down"
-                      }`}
-                    ></i>
-                  </span>
-                </div>
-                <div
-                  className={`menu-sub menu-sub-accordion ${
-                    openDropdown === "help-support" ? "show" : ""
-                  }`}
-                  style={{
-                    display: openDropdown === "help-support" ? "block" : "none",
-                  }}
-                >
+            {hasPermission('view_help_support') && (
+            <>
+              {isCollapsed ? (
+                <>
                   <div className="menu-item">
-                    <NavLink
-                      to="/help-support"
-                      className="menu-link portal-nav-hover"
-                      onClick={hideSidebar}
-                    >
-                      <span className="menu-bullet">
-                        <span className="bullet bullet-dot"></span>
+                    <NavLink to="/help-support" className="menu-link portal-nav-hover">
+                      <span className="menu-icon">
+                        <i class="bi bi-headset"></i>
                       </span>
                       <span className="menu-title fs-6">Help & Support</span>
                     </NavLink>
                   </div>
                   {/* <div className="menu-item">
-                    <NavLink
-                      to="/track-my-ticket"
-                      className="menu-link portal-nav-hover"
-                      onClick={hideSidebar}
-                    >
-                      <span className="menu-bullet">
-                        <span className="bullet bullet-dot"></span>
+                    <NavLink to="/track-my-ticket" className="menu-link portal-nav-hover">
+                      <span className="menu-icon">
+                        <i class="bi bi-ticket-perforated"></i>
                       </span>
                       <span className="menu-title fs-6">Track My Ticket</span>
                     </NavLink>
                   </div> */}
+                </>
+              ) : (
+                <div className="menu-item">
+                  <div
+                    className="menu-link portal-nav-hover"
+                    onClick={() => toggleDropdown("help-support")}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <span className="menu-icon">
+                      <i class="bi bi-headset"></i>
+                    </span>
+                    <span className="menu-title fs-6">Help & Support</span>
+                    <span className="menu-arrow">
+                      <i
+                        className={`bi bi-chevron-${
+                          openDropdown === "help-support" ? "up" : "down"
+                        }`}
+                      ></i>
+                    </span>
+                  </div>
+                  <div
+                    className={`menu-sub menu-sub-accordion ${
+                      openDropdown === "help-support" ? "show" : ""
+                    }`}
+                    style={{
+                      display: openDropdown === "help-support" ? "block" : "none",
+                    }}
+                  >
+                    <div className="menu-item">
+                      <NavLink
+                        to="/help-support"
+                        className="menu-link portal-nav-hover"
+                        onClick={hideSidebar}
+                      >
+                        <span className="menu-bullet">
+                          <span className="bullet bullet-dot"></span>
+                        </span>
+                        <span className="menu-title fs-6">Help & Support</span>
+                      </NavLink>
+                    </div>
+                    {/* <div className="menu-item">
+                      <NavLink
+                        to="/track-my-ticket"
+                        className="menu-link portal-nav-hover"
+                        onClick={hideSidebar}
+                      >
+                        <span className="menu-bullet">
+                          <span className="bullet bullet-dot"></span>
+                        </span>
+                        <span className="menu-title fs-6">Track My Ticket</span>
+                      </NavLink>
+                    </div> */}
+                  </div>
                 </div>
-              </div>
+              )}
+            </>
             )}
           </div>
         </div>

@@ -49,6 +49,56 @@ class AuthService {
     }
   }
 
+  // Password based login
+  async passwordLogin(email, password, deviceToken = null, is_company = 1) {
+    try {
+      const response = await ApiService.request({
+        method: 'POST',
+        url: 'password-login',
+        data: { email, password, deviceToken, is_company },
+      });
+
+      if (response.data && response.data.status && response.data.data) {
+        if (response.data.data.is_2fa_enabled) {
+           return response.data;
+        }
+
+        // Save user and auth token to localStorage if not 2fa
+        var loggedUser = response.data.data.user;
+        if (response.data.data.is_team_member) {
+          const team_member={
+            id:response.data.data.team.id,
+            name:response.data.data.team.name,
+            email:response.data.data.team.email,
+            role:response.data.data.team.role,
+            picture:response.data.data.team?.picture,
+            is_2fa_enabled:response.data.data.team?.is_2fa_enabled,
+          };
+            loggedUser = team_member;
+        }
+        loggedUser.auth_token = response.data.data.auth_token;
+        loggedUser.lastLogin = new Date().toISOString();
+        
+    
+        // Handle permissions
+        let permissions = [];
+        if (response.data.data.permissions) {
+              permissions = response.data.data.permissions;
+        }
+        localStorage.setItem('permissions', JSON.stringify(permissions));
+        
+        localStorage.setItem('loggedUser', JSON.stringify(loggedUser));
+        localStorage.setItem('isAuthenticated', 'true');
+        
+        return response.data;
+      }
+      
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   // Google login
   async googleLogin(name, email, googleId, deviceToken = null) {
     try {

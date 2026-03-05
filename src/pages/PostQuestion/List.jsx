@@ -5,6 +5,7 @@ import ApiService from "../../services/ApiService";
 import notificationProfile from "../../assets/images/notification-profile.png";
 import NoQuestion from "../../assets/images/NoQuestion.png";
 import PaymentModal from "../../components/PaymentModal";
+import AskQuestionOffcanvas from "../../components/AskQuestionOffcanvas";
 import "../../assets/css/siri-border-animation.css";
 
 const List = () => {
@@ -583,6 +584,58 @@ const List = () => {
     }
   };
 
+  const refreshQuestions = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await ApiService.request({
+        method: "GET",
+        url: "getMyQuestions",
+        data: searchQuery ? { search: searchQuery } : {},
+      });
+      const data = response.data;
+      if (data.status && data.data.questions) {
+        const apiQuestions = data.data.questions.map((q, index) => {
+          const createdDate = q.created_at ? new Date(q.created_at) : new Date();
+          const formattedDate = createdDate.toLocaleDateString("en-US", {
+            month: "short",
+            day: "2-digit",
+            year: "numeric",
+          });
+          const formattedTime = createdDate.toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          });
+          return {
+            id: q.id,
+            title: q.question || "",
+            date: `${formattedDate} - ${formattedTime}`,
+            views: 0,
+            answers: q.answers_count || 0,
+            isHighlighted: index === 0,
+            jurisdiction: q.jurisdiction ? {
+              id: q.jurisdiction.id,
+              name: q.jurisdiction.name || ""
+            } : null,
+            timestamp: q.created_at,
+            rawData: {
+              ...q,
+              status: q.status || null,
+            },
+          };
+        });
+        setQuestions(apiQuestions);
+        setPagination(data.data.pagination);
+      } else {
+        setQuestions([]);
+      }
+    } catch (e) {
+      setQuestions([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [searchQuery]);
+
   return (
     <div
       className="d-flex flex-column flex-column-fluid ask-question--mukta-font"
@@ -1017,305 +1070,12 @@ const List = () => {
         </div>
       )}
 
-      {/* Post Question Offcanvas */}
-      {showPostQuestion && (
-        <div
-          className="offcanvas offcanvas-end show"
-          tabIndex="-1"
-          style={{
-            position: "fixed",
-            top: 0,
-            right: 0,
-            bottom: 0,
-            visibility: "visible",
-            width: "633px",
-            transition: "all 0.3s ease-out",
-            borderRadius: "13px",
-            margin: "20px",
-            zIndex: 1045,
-            transform: isClosing ? "translateX(100%)" : "translateX(0)",
-            animation: isClosing ? "slideOutToRight 0.3s ease-in" : "slideInFromRight 0.3s ease-out",
-            backgroundColor: "#fff",
-          }}
-        >
-          <div className="offcanvas-header border-bottom" style={{ borderTopLeftRadius: "15px", borderTopRightRadius: "15px" }}>
-            <div className="d-flex justify-content-between align-items-center w-100">
-              <h5 className="mb-0 fw-bold">Post Question</h5>
-              <button
-                type="button"
-                className="btn-close"
-                onClick={handleClosePostQuestion}
-              ></button>
-            </div>
-          </div>
-
-          <div className="offcanvas-body p-4" style={{ borderBottomLeftRadius: "15px", borderBottomRightRadius: "15px" }}>
-            {/* Question Input */}
-            <div className="mb-3 siri-border-animation">
-              <textarea
-                className="form-control"
-                placeholder="Explain Your Question"
-                value={questionText}
-                onChange={(e) => setQuestionText(e.target.value)}
-                style={{
-                  resize: "none",
-                  width: "606px",
-                  height: "217px",
-                  border: "1px solid #C9C9C9",
-                  borderRadius: "8px",
-                  position: "relative",
-                  zIndex: 1,
-                  backgroundColor: "#ffffff",
-                }}
-              ></textarea>
-            </div>
-
-            {/* Jurisdiction Dropdown */}
-            <div className="mb-3">
-              <div className="position-relative" ref={jurisdictionDropdownRef}>
-                <button
-                  type="button"
-                  className="form-select d-flex align-items-center justify-content-between"
-                  onClick={() => setShowJurisdictionDropdown(!showJurisdictionDropdown)}
-                  disabled={loadingJurisdictions}
-                  style={{
-                    width: "606px",
-                    height: "79px",
-                    border: "1px solid #C9C9C9",
-                    borderRadius: "8px",
-                    backgroundColor: loadingJurisdictions ? "#f5f5f5" : "#fff",
-                    cursor: loadingJurisdictions ? "not-allowed" : "pointer",
-                    textAlign: "left",
-                    paddingLeft: "12px",
-                    paddingRight: "40px",
-                  }}
-                >
-                  <span style={{ color: questionJurisdiction ? "#000" : "#6c757d" }}>
-                    {loadingJurisdictions 
-                      ? "Loading..." 
-                      : questionJurisdiction 
-                        ? jurisdictions.find(j => j.id.toString() === questionJurisdiction.toString())?.name || "Jurisdiction"
-                        : "Jurisdiction"
-                    }
-                  </span>
-                  <i className={`bi bi-chevron-${showJurisdictionDropdown ? "up" : "down"} position-absolute end-0 translate-middle-y me-3 text-gray-600`} style={{ top: "50%" }}></i>
-                </button>
-                
-                {showJurisdictionDropdown && !loadingJurisdictions && (
-                  <div 
-                    className="position-absolute bg-white border rounded shadow-lg"
-                    style={{ 
-                      zIndex: 1050, 
-                      width: "606px", 
-                      maxHeight: "400px", 
-                      overflowY: "auto",
-                      overflowX: "hidden",
-                      top: "100%",
-                      marginTop: "8px",
-                      bottom: "auto"
-                    }}
-                  >
-                    {jurisdictions.length > 0 ? (
-                      jurisdictions.map((jurisdiction) => (
-                        <button
-                          key={jurisdiction.id}
-                          type="button"
-                          className="btn btn-light w-100 text-start px-3 py-2 border-0"
-                          onClick={() => {
-                            setQuestionJurisdiction(jurisdiction.id.toString());
-                            setShowJurisdictionDropdown(false);
-                          }}
-                          style={{ 
-                            fontSize: "0.9rem",
-                            backgroundColor: questionJurisdiction === jurisdiction.id.toString() ? "#f0f0f0" : "#fff"
-                          }}
-                        >
-                          {jurisdiction.name}
-                        </button>
-                      ))
-                    ) : (
-                      <div className="p-3 text-center text-muted">
-                        <small>No jurisdictions available</small>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* File Upload */}
-            <div className="mb-3">
-              <label
-                htmlFor="file-upload"
-                className="d-flex align-items-center justify-content-start border border-2 border-dashed rounded"
-                style={{
-                  border: "1.5px dashed #C9C9C9",
-                  width: "606px",
-                  height: "80px",
-                  borderRadius: "8px",
-                  cursor: "pointer",
-                }}
-              >
-                <div
-                  className="p-3 mx-3 rounded-1"
-                  style={{
-                    backgroundColor: "#FDFDFD",
-                    border: "1px dashed #BEBEBE",
-                  }}
-                >
-                  <i
-                    className="bi bi-paperclip fs-3 d-inline-block"
-                    style={{
-                      transform: "rotate(45deg)",
-                      display: "inline-block",
-                    }}
-                  ></i>
-                </div>
-
-                <div>
-                  <p className="text-muted mb-0">Attach Document</p>
-                  {attachments.length > 0 && (
-                    <small className="text-success">
-                      {attachments.length} file(s) selected
-                    </small>
-                  )}
-                </div>
-              </label>
-              <input
-                type="file"
-                id="file-upload"
-                multiple
-                accept=".png,.jpg,.jpeg,.gif,.pdf,.doc,.docx"
-                onChange={handleFileChange}
-                style={{ display: "none" }}
-              />
-              {attachments.length > 0 && (
-                <div className="mt-2">
-                  {attachments.map((file, index) => (
-                    <div key={index} className="d-flex align-items-center justify-content-between bg-light p-2 mb-1 rounded">
-                      <small className="text-dark">{file.name}</small>
-                      <button
-                        type="button"
-                        className="btn btn-sm btn-link text-danger p-0"
-                        onClick={() => {
-                          const newAttachments = attachments.filter((_, i) => i !== index);
-                          setAttachments(newAttachments);
-                        }}
-                      >
-                        <i className="bi bi-x"></i>
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* How it works Section */}
-            <div className="mb-3">
-              <h6 className="fw-bold mb-2">How it works</h6>
-              <div className="d-flex align-items-start gap-5 my-5">
-                <i
-                  className="bi bi-moon-fill text-black"
-                  style={{
-                    transform: "rotate(35deg)",
-                    display: "inline-block",
-                  }}
-                ></i>
-                <small className="text-muted">
-                  Ask your question and see the answer in Questions & Answers.
-                </small>
-              </div>
-              <div className="d-flex align-items-start gap-5 my-5">
-                <i
-                  className="bi bi-moon-fill text-black"
-                  style={{
-                    transform: "rotate(35deg)",
-                    display: "inline-block",
-                  }}
-                ></i>
-                <small className="text-muted">
-                  You will be notified when a lawyer answers.
-                </small>
-              </div>
-            </div>
-
-            {/* Post Question Fee */}
-            <div
-              className="mb-3 rounded-4"
-              style={{
-                border: "1px solid #D3D3D3",
-                width: "606px",
-                height: "92px",
-                borderRadius: "8px",
-              }}
-            >
-              <div className="d-flex justify-content-between align-items-center h-100 rounded">
-                <div className="p-3">
-                  <h6 className="fw-bold mb-1">Post Question Fee</h6>
-                  <small className="text-muted">1 Question post only</small>
-                </div>
-                <div
-                  className="text-end px-5 h-100 d-flex flex-column justify-content-center"
-                  style={{ borderLeft: "1px solid #D3D3D3" }}
-                >
-                  <div className="fw-bold">USD</div>
-                  <div className="fw-bold fs-5">
-                    {loadingPaymentAmount ? (
-                      <span className="spinner-border spinner-border-sm" role="status"></span>
-                    ) : (
-                      questionPaymentAmount > 0 ? questionPaymentAmount.toFixed(2) : "1.00"
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <button
-              className="btn text-white rounded-pill"
-              onClick={handlePostQuestion}
-              disabled={postingQuestion}
-              style={{
-                height: "63px",
-                fontSize: "20px",
-                fontWeight: "500",
-                backgroundColor: postingQuestion ? "#999" : "#474747",
-                width: "606px",
-                marginTop: "25px",
-                cursor: postingQuestion ? "not-allowed" : "pointer",
-              }}
-            >
-              {postingQuestion ? (
-                <>
-                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  Posting...
-                </>
-              ) : (
-                "Post Your Legal Issues"
-              )}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Backdrop for Post Question */}
-      {showPostQuestion && (
-        <div
-          className="offcanvas-backdrop fade show"
-          onClick={handleClosePostQuestion}
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            zIndex: 1040,
-            width: "100vw",
-            height: "100vh",
-            backgroundColor: "rgba(0,0,0,0.2)",
-            transition: "all 0.3s ease-out",
-            animation: isClosing ? "fadeOut 0.3s ease-in" : "fadeIn 0.3s ease-out",
-          }}
-        ></div>
-      )}
+      <AskQuestionOffcanvas
+        show={showPostQuestion}
+        onClose={handleClosePostQuestion}
+        jurisdictionOptions={jurisdictions.map(j => ({ label: j.name, value: j.id }))}
+        onSuccess={refreshQuestions}
+      />
 
       {/* Backdrop */}
       {showDetail && (

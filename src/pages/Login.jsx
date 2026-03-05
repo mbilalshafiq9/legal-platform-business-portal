@@ -34,6 +34,8 @@ const Login = () => {
   const savedCredentials = loadSavedCredentials();
   
   const [email, setEmail] = useState(savedCredentials?.email || "");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [otp, setOtp] = useState("");
   const [isLoader, setIsLoader] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
@@ -132,10 +134,20 @@ const Login = () => {
           // Save login credentials to localStorage
           var loggedUser = response.data.user;
 
+          if (response.data.is_team_member) {
+            loggedUser = response.data.team;
+          }
+
           loggedUser.auth_token = response.data.auth_token;
           loggedUser.lastLogin = new Date().toISOString();
 
           localStorage.setItem("loggedUser", JSON.stringify(loggedUser));
+           // Handle permissions
+          let permissions = [];
+          if (response.data.permissions) {
+                permissions = response.data.permissions;
+          }
+          localStorage.setItem('permissions', JSON.stringify(permissions));
 
           toast.success("Login successful!");
           navigate("/dashboard");
@@ -152,23 +164,32 @@ const Login = () => {
       return;
     }
 
-    // Step 1: Send OTP to email
+    // Step 1: Login with Email & Password
     setIsLoader(true);
     try {
-      const language = localStorage.getItem("admin_lang") || "en";
-      const is_company = 1;
-      const response = await AuthService.userLogin(
+      if (!password) {
+        toast.error("Please enter your password");
+        setIsLoader(false);
+        return;
+      }
+
+      const response = await AuthService.passwordLogin(
         email,
-        language,
-        deviceToken,
-        is_company,
+        password,
+        deviceToken
       );
       
       if (response.status) {
-        toast.success(response.message || "OTP sent to your email. Please check your inbox.");
-        setShowOtpInput(true);
+        if (response.data && response.data.is_2fa_enabled) {
+          toast.success(response.message || "OTP sent to your email. Please check your inbox.");
+          setShowOtpInput(true);
+        } else {
+          // User is logged in by AuthService saving logic
+          toast.success("Login successful!");
+          navigate("/dashboard");
+        }
       } else {
-        toast.error(response.message || "Failed to send OTP. Please try again.");
+        toast.error(response.message || "Login failed. Please check your credentials.");
       }
     } catch (error) {
       console.error("Login failed:", error);
@@ -310,22 +331,29 @@ const Login = () => {
             </div>
 
             {/* Password Field - Hidden when OTP input is shown */}
-            {/* {!showOtpInput && (
+            {!showOtpInput && (
               <div className="form-group" data-aos="fade-up" data-aos-delay="600">
                 <label className="form-label" style={{ fontSize: "18px" }}>Password</label>
-                <div className="password-container">
+                <div className="password-container position-relative">
                   <input
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="form-input rounded-pill login-page-inp"
-                    placeholder="Password (Optional)"
-                    autoComplete="off"
-                    style={{ width: "398px", height: "67px", fontSize: "18px", paddingLeft: "30px", paddingRight: "30px" }}
+                    placeholder="Enter Password"
+                    autoComplete="current-password"
+                    style={{ width: "398px", height: "67px", fontSize: "18px", paddingLeft: "30px", paddingRight: "60px" }}
                   />
+                  <span 
+                    className="position-absolute top-50 translate-middle-y cursor-pointer" 
+                    style={{ right: "20px", cursor: "pointer", zIndex: 10 }}
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    <i className={`bi bi-eye${showPassword ? '-slash' : ''} fs-4 text-muted`}></i>
+                  </span>
                 </div>
               </div>
-            )} */}
+            )}
 
             {/* OTP Field - Shown after email is submitted */}
             {showOtpInput && (

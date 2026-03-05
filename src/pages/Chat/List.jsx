@@ -68,6 +68,7 @@ const List = () => {
   const [activeSubTab, setActiveSubTab] = useState("active");
   const [selectedContact, setSelectedContact] = useState(null);
   const [selectedChat, setSelectedChat] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
   
@@ -78,6 +79,7 @@ const List = () => {
     // Clear selected contact when switching routes
     setSelectedContact(null);
     setSelectedChat(null);
+    setSearchTerm("");
   }, [location.pathname]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sendingMessage, setSendingMessage] = useState(false);
@@ -809,11 +811,22 @@ const List = () => {
   };
 
   const getCurrentData = () => {
+    let data = [];
     if (activeTab === "lawyers") {
-      return activeSubTab === "active" ? activeLawyers : inactiveLawyers;
+      data = activeSubTab === "active" ? activeLawyers : inactiveLawyers;
     } else {
-      return chatContacts;
+      data = chatContacts;
     }
+
+    if (!searchTerm.trim()) return data;
+
+    const term = searchTerm.toLowerCase().trim();
+    return data.filter(item => 
+      (item.name && item.name.toLowerCase().includes(term)) ||
+      (item.lastMessage && item.lastMessage.toLowerCase().includes(term)) ||
+      (item.title && item.title.toLowerCase().includes(term)) ||
+      (item.specializations && item.specializations.toLowerCase().includes(term))
+    );
   };
 
   // Calculate unread counts for badges
@@ -856,7 +869,10 @@ const List = () => {
                           ? "border-bottom-3px text-black rounded-0 active"
                           : "text-black"
                       }`}
-                      onClick={() => setActiveTab("chats")}
+                      onClick={() => {
+                        setActiveTab("chats");
+                        setSearchTerm("");
+                      }}
                     >
                       Chats
                       {getUnreadChatsCount() > 0 && (
@@ -871,7 +887,10 @@ const List = () => {
                           ? "border-bottom-3px text-black rounded-0 active"
                           : "text-black"
                       }`}
-                      onClick={() => setActiveTab("lawyers")}
+                      onClick={() => {
+                        setActiveTab("lawyers");
+                        setSearchTerm("");
+                      }}
                     >
                       My Lawyers
                       {getUnreadLawyersCount() > 0 && (
@@ -911,19 +930,30 @@ const List = () => {
                   </div>
                 )}
 
-                {/* Search Bar for Chats Tab */}
-                {activeTab === "chats" && (
-                  <div className="p-4">
-                    <div className="position-relative">
-                      <input
-                        type="text"
-                        className="form-control form-control-lg rounded-pill my-lawyers-search-input"
-                        placeholder="Search"
-                      />
-                      <i className="bi bi-search position-absolute top-50 translate-middle-y text-muted fs-4 ms-4"></i>
-                    </div>
+                {/* Search Bar */}
+                <div className="p-4 mb-4">
+                  <div className="position-relative">
+                    <input
+                      type="text"
+                      className="form-control form-control-lg rounded-pill my-lawyers-search-input"
+                      placeholder="Search"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      style={{ paddingRight: "45px" }}
+                    />
+                    <i className="bi bi-search position-absolute top-50 translate-middle-y text-muted fs-4 ms-4"></i>
+                    {searchTerm && (
+                      <button
+                        type="button"
+                        className="btn btn-link position-absolute top-50 end-0 translate-middle-y me-2 p-0"
+                        onClick={() => setSearchTerm("")}
+                        style={{ border: "none", background: "none" }}
+                      >
+                        <i className="bi bi-x-circle text-muted"></i>
+                      </button>
+                    )}
                   </div>
-                )}
+                </div>
 
                 {/* Contact List */}
                 <div

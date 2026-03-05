@@ -88,7 +88,7 @@ const List = () => {
               marginTop: "30px",
             }} data-aos="fade-up">
         <div className="col-12 px-0">
-          <div className="d-flex gap-3 align-items-center">
+          <div className="d-lg-flex gap-3 align-items-center">
             {/* Search Bar */}
             <div className="position-relative flex-grow-1" style={{ maxWidth: "400px" }}>
               <input
@@ -99,7 +99,7 @@ const List = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 style={{
                   paddingLeft: "45px",
-                  width: "483px",
+                  // width: "483px",
                   height: "45px",
                   border: "1px solid #e9ecef",
                   backgroundColor: "#fff",
@@ -125,7 +125,7 @@ const List = () => {
                   backgroundColor: "#f8f9fa",
                 }}
               >
-                <i className="bi bi-plus text-black bg-white rounded-pill d-flex justify-content-center align-items-center pe-0"></i>
+                <i className="bi bi-plus text-black bg-white rounded-pill pe-0"></i>
               </div>
               Add New Case
             </button>

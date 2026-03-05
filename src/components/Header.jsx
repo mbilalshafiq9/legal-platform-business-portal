@@ -33,6 +33,13 @@ const Header = () => {
   const getUserPicture = (user) => {
     return user?.picture || blank;
   };
+  const getInitials = (fullName) => {
+    if (!fullName || typeof fullName !== "string") return "";
+    const parts = fullName.trim().split(/\s+/);
+    const first = parts[0]?.[0] || "";
+    const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
+    return (first + last).toUpperCase();
+  };
  
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -48,6 +55,8 @@ const Header = () => {
   const [showNotificationPermission, setShowNotificationPermission] = useState(false);
   const profileDropdownTimeoutRef = useRef(null);
   const notificationDropdownTimeoutRef = useRef(null);
+  const [headerAvatarError, setHeaderAvatarError] = useState(false);
+  const [dropdownAvatarError, setDropdownAvatarError] = useState(false);
 
   // Check if we're on the Ask Question page
   const isAskQuestionPage =
@@ -57,7 +66,8 @@ const Header = () => {
   // Check if we're on the Chat page
   const isChatPage =
     location.pathname.includes("/users") ||
-    location.pathname.includes("/messages");
+    location.pathname.includes("/messages") ||
+    location.pathname.includes("/chat");
 
   // Check if we're on the My Lawyers page
   const isMyLawyersPage =
@@ -85,6 +95,7 @@ const Header = () => {
   const isEmployeeDetailsPage =
     location.pathname.includes("/employees/") &&
     location.pathname !== "/employees";
+  const isAccountPage = location.pathname.includes("/account");
 
   const logout = () => {
     setShowLogoutModal(true);
@@ -99,7 +110,7 @@ const Header = () => {
   };
 
   const handleProfileClick = () => {
-    navigate("/employees/detail");
+    navigate("/account");
     setShowProfileDropdown(false);
   };
 
@@ -499,16 +510,20 @@ const Header = () => {
     >
       <div className="p-3">
         <div className="d-flex align-items-center mb-3">
-          <div className="symbol symbol-50px me-3">
-            <img
-              src={getUserPicture(user)}
-              onError={(e) => {
-                e.target.src = blank;
-              }}
-              alt="Profile"
-              className="rounded-circle"
-              style={{ width: "50px", height: "50px", objectFit: "cover" }}
-            />
+          <div className="symbol symbol-50px me-3 d-flex align-items-center justify-content-center" style={{ width: "50px", height: "50px" }}>
+            {(!user?.picture || String(user?.picture).toLowerCase().includes("blank")) ? (
+              <div className="rounded-circle d-flex align-items-center justify-content-center bg-light text-white" style={{ width: "50px", height: "50px" }}>
+                <span className="fw-bold text-dark" style={{ fontSize: "1rem" }}>{getInitials(user?.name)}</span>
+              </div>
+            ) : (
+              <img
+                src={getUserPicture(user)}
+                onError={() => setDropdownAvatarError(true)}
+                alt="Profile"
+                className="rounded-circle"
+                style={{ width: "50px", height: "50px", objectFit: "cover" }}
+              />
+            )}
           </div>
           <div className="flex-grow-1">
             <div className="fw-bold text-dark fs-5 mb-1">{user.name}</div>
@@ -536,814 +551,128 @@ const Header = () => {
     </div>
   );
 
+  // Determine the page title and subtitle based on the current path
+  const getPageDetails = () => {
+    if (isAskQuestionPage) return { title: "Post question", subtitle: "Post Connect and Solve" };
+    if (isChatPage) return { title: "Messages", subtitle: "Quick, Clear and concise communications." };
+    if (isMyLawyersPage) return { title: "My Lawyers", subtitle: "Stay updated with your legal team anytime." };
+    if (isMyCasesPage) return { title: "My Cases", subtitle: "View all your cases and connect with interested lawyers." };
+    if (isLawyersPage) return { title: "Lawyers", subtitle: "Search, compare, and connect with verified lawyers instantly." };
+    if (isNotificationsPage) return { title: "Notifications", subtitle: "Listing notifications" };
+    if (isCaseDetailsPage) return { title: "Case Summary", subtitle: "Detail" };
+    if (isEmployeeDetailsPage) return { title: "Employee Details", subtitle: "View and manage employee information." };
+    if (isEmployeesPage) return { title: "Team", subtitle: "Add your team members and send invites." };
+    if (isAccountPage) return { title: "Account", subtitle: "Manage profile, email, and security." };
+    
+    // Default for Dashboard or unknown pages
+    return { title: "Dashboard", subtitle: "Monitor your cases and messages." };
+  };
+
+  const { title, subtitle } = getPageDetails();
+
   return (
     <div
       id="kt_app_header"
       className="app-header modern-header-container"
       data-aos="fade-down"
     >
-      {isAskQuestionPage ? (
-        // Ask Question Page Header
-        <div className="d-flex justify-content-between align-items-center w-100">
-          <div className="d-flex align-items-center">
-            {/* Mobile menu toggle */}
+      <div className="d-flex justify-content-between align-items-center w-100 px-lg-5">
+        <div className="d-flex align-items-center">
+          {/* Mobile menu toggle */}
+          <div
+            className="d-flex align-items-center d-lg-none me-3"
+            title="Show sidebar menu"
+          >
             <div
-              className="d-flex align-items-center d-lg-none me-3"
-              title="Show sidebar menu"
+              className="btn btn-icon btn-active-color-primary w-35px h-35px"
+              id="kt_app_sidebar_mobile_toggle"
             >
-              <div
-                className="btn btn-icon btn-active-color-primary w-35px h-35px"
-                id="kt_app_sidebar_mobile_toggle"
-              >
-                <i className="bi bi-list text-gray-600 fs-1"></i>
-              </div>
-            </div>
-            <div>
-              <h1 className="fw-bold text-dark fs-2 mb-2">Post question</h1>
-              <p className="text-gray-600 fs-6 mb-0">Post Connect and Solve</p>
+              <i className="bi bi-list text-gray-600 fs-1"></i>
             </div>
           </div>
-          <div className="d-flex align-items-center gap-3">
-            {/* Dark Mode Toggle */}
-            <motion.div 
-              className="modern-icon-container dark-mode-toggle"
-              onClick={toggleDarkMode}
-              title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            >
-              <AnimatePresence mode="wait">
-                <motion.i
-                  key={isDarkMode ? "sun" : "moon"}
-                  className={`modern-icon ${isDarkMode ? 'bi bi-sun' : 'bi bi-moon'}`}
-                  initial={{ rotate: -180, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: 180, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
-                />
-              </AnimatePresence>
-            </motion.div>
-            
-            <div
-              className="modern-icon-container position-relative"
-              onMouseEnter={handleNotificationDropdownEnter}
-              onMouseLeave={handleNotificationDropdownLeave}
-            >
-              <i className="bi bi-bell text-gray-600 fs-4"></i>
-              {unreadCount > 0 && (
-                <span
+          <div>
+            <h1 className="fw-bold text-dark fs-2 mb-1">{title}</h1>
+            <p className="text-gray-600 fs-6 mb-0">{subtitle}</p>
+          </div>
+        </div>
+
+        <div className="d-flex align-items-center gap-3">
+          {/* Dark Mode Toggle */}
+          <motion.div 
+            className="modern-icon-container dark-mode-toggle"
+            onClick={toggleDarkMode}
+            title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          >
+            <AnimatePresence mode="wait">
+              <motion.i
+                key={isDarkMode ? "sun" : "moon"}
+                className={`modern-icon ${isDarkMode ? 'bi bi-sun' : 'bi bi-moon'}`}
+                initial={{ rotate: -180, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                exit={{ rotate: 180, opacity: 0 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+              />
+            </AnimatePresence>
+          </motion.div>
+
+          {/* Messages Icon */}
+          <NavLink to="/chat" className="text-decoration-none">
+            <div className="modern-icon-container position-relative">
+              <i className="bi bi-chat-dots text-gray-600 fs-4"></i>
+              {unreadChatCount > 0 && (
+                <span 
                   className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-black"
                   style={{ fontSize: "0.6rem" }}
                 >
-                  {unreadCount}
+                  {unreadChatCount > 9 ? '9+' : unreadChatCount}
                 </span>
               )}
-              {showNotificationDropdown && <NotificationDropdown />}
             </div>
-            <div 
-              className="symbol symbol-40px position-relative"
-              onMouseEnter={handleProfileDropdownEnter}
-              onMouseLeave={handleProfileDropdownLeave}
-            >
-              <div className="symbol-label text-white rounded-circle cursor-pointer">
+          </NavLink>
+          
+          {/* Notifications Icon */}
+          <div
+            className="modern-icon-container position-relative"
+            onMouseEnter={handleNotificationDropdownEnter}
+            onMouseLeave={handleNotificationDropdownLeave}
+          >
+            <i className="bi bi-bell text-gray-600 fs-4"></i>
+            {unreadCount > 0 && (
+              <span
+                className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-black"
+                style={{ fontSize: "0.6rem" }}
+              >
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+            {showNotificationDropdown && <NotificationDropdown />}
+          </div>
+
+          {/* User Profile */}
+          <div 
+            className="symbol symbol-40px position-relative"
+            onMouseEnter={handleProfileDropdownEnter}
+            onMouseLeave={handleProfileDropdownLeave}
+          >
+            <div className="symbol-label text-white rounded-circle cursor-pointer d-flex align-items-center justify-content-center w-50px h-50px">
+              {(!user?.picture || String(user?.picture).toLowerCase().includes("blank")) ? (
+                <span className="fw-bold text-dark " style={{ fontSize: "1rem" }}>{getInitials(user?.name)}</span>
+              ) : (
                 <img
                   src={getUserPicture(user)}
-              onError={(e) => {
-                e.target.src = blank;
-              }}
+                  onError={() => setHeaderAvatarError(true)}
                   className="w-40px h-40px rounded-circle"
                   alt="Profile"
                 />
-              </div>
-              {showProfileDropdown && <ProfileDropdown />}
-            </div>
-          </div>
-        </div>
-      ) : isChatPage ? (
-        // Chat Page Header
-        <div className="d-flex justify-content-between align-items-center w-100">
-          <div className="d-flex align-items-center">
-            {/* Mobile menu toggle */}
-            <div
-              className="d-flex align-items-center d-lg-none me-3"
-              title="Show sidebar menu"
-            >
-              <div
-                className="btn btn-icon btn-active-color-primary w-35px h-35px"
-                id="kt_app_sidebar_mobile_toggle"
-              >
-                <i className="bi bi-list text-gray-600 fs-1"></i>
-              </div>
-            </div>
-            <div>
-              <h1 className="fw-bold text-dark fs-2 mb-2">Messages</h1>
-              <p className="text-gray-600 fs-6 mb-0">
-                Quick, Clear and concise communications.
-              </p>
-            </div>
-          </div>
-          <div className="d-flex align-items-center gap-3">
-            {/* Dark Mode Toggle */}
-            <motion.div 
-              className="modern-icon-container dark-mode-toggle"
-              onClick={toggleDarkMode}
-              title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            >
-              <AnimatePresence mode="wait">
-                <motion.i
-                  key={isDarkMode ? "sun" : "moon"}
-                  className={`modern-icon ${isDarkMode ? 'bi bi-sun' : 'bi bi-moon'}`}
-                  initial={{ rotate: -180, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: 180, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
-                />
-              </AnimatePresence>
-            </motion.div>
-            
-            <div
-              className="modern-icon-container position-relative"
-              onMouseEnter={handleNotificationDropdownEnter}
-              onMouseLeave={handleNotificationDropdownLeave}
-            >
-              <i className="bi bi-bell text-gray-600 fs-4"></i>
-              {unreadCount > 0 && (
-                <span
-                  className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-black"
-                  style={{ fontSize: "0.6rem" }}
-                >
-                  {unreadCount}
-                </span>
               )}
-              {showNotificationDropdown && <NotificationDropdown />}
             </div>
-            <div 
-              className="symbol symbol-40px position-relative"
-              onMouseEnter={handleProfileDropdownEnter}
-              onMouseLeave={handleProfileDropdownLeave}
-            >
-              <div className="symbol-label bg-warning text-white rounded-circle cursor-pointer">
-                <img
-                  src={getUserPicture(user)}
-              onError={(e) => {
-                e.target.src = blank;
-              }}
-                  className="w-40px h-40px rounded-circle"
-                  alt="Profile"
-                />
-              </div>
-              {showProfileDropdown && <ProfileDropdown />}
-            </div>
+            {showProfileDropdown && <ProfileDropdown />}
           </div>
         </div>
-      ) : isMyLawyersPage ? (
-        // My Lawyers Page Header
-        <div className="d-flex justify-content-between align-items-center w-100">
-          <div className="d-flex align-items-center">
-            {/* Mobile menu toggle */}
-            <div
-              className="d-flex align-items-center d-lg-none me-3"
-              title="Show sidebar menu"
-            >
-              <div
-                className="btn btn-icon btn-active-color-primary w-35px h-35px"
-                id="kt_app_sidebar_mobile_toggle"
-              >
-                <i className="bi bi-list text-gray-600 fs-1"></i>
-              </div>
-            </div>
-            <div>
-              <h1 className="fw-bold text-dark fs-2 mb-2">My Lawyers</h1>
-              <p className="text-gray-600 fs-6 mb-0">
-                Stay updated with your legal team anytime.
-              </p>
-            </div>
-          </div>
-          <div className="d-flex align-items-center gap-3">
-            {/* Dark Mode Toggle */}
-            <motion.div 
-              className="modern-icon-container dark-mode-toggle"
-              onClick={toggleDarkMode}
-              title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            >
-              <AnimatePresence mode="wait">
-                <motion.i
-                  key={isDarkMode ? "sun" : "moon"}
-                  className={`modern-icon ${isDarkMode ? 'bi bi-sun' : 'bi bi-moon'}`}
-                  initial={{ rotate: -180, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: 180, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
-                />
-              </AnimatePresence>
-            </motion.div>
-            
-            <div
-              className="modern-icon-container position-relative"
-              onMouseEnter={handleNotificationDropdownEnter}
-              onMouseLeave={handleNotificationDropdownLeave}
-            >
-              <i className="bi bi-bell text-gray-600 fs-4"></i>
-              {unreadCount > 0 && (
-                <span
-                  className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-black"
-                  style={{ fontSize: "0.6rem" }}
-                >
-                  {unreadCount}
-                </span>
-              )}
-              {showNotificationDropdown && <NotificationDropdown />}
-            </div>
-            <div 
-              className="symbol symbol-40px position-relative"
-              onMouseEnter={handleProfileDropdownEnter}
-              onMouseLeave={handleProfileDropdownLeave}
-            >
-              <div className="symbol-label bg-warning text-white rounded-circle cursor-pointer">
-                <img
-                  src={getUserPicture(user)}
-              onError={(e) => {
-                e.target.src = blank;
-              }}
-                  className="w-40px h-40px rounded-circle"
-                  alt="Profile"
-                />
-              </div>
-              {showProfileDropdown && <ProfileDropdown />}
-            </div>
-          </div>
-        </div>
-      ) : isMyCasesPage ? (
-        // My Cases Page Header
-        <div className="d-flex justify-content-between align-items-center w-100">
-          <div className="d-flex align-items-center">
-            {/* Mobile menu toggle */}
-            <div
-              className="d-flex align-items-center d-lg-none me-3"
-              title="Show sidebar menu"
-            >
-              <div
-                className="btn btn-icon btn-active-color-primary w-35px h-35px"
-                id="kt_app_sidebar_mobile_toggle"
-              >
-                <i className="bi bi-list text-gray-600 fs-1"></i>
-              </div>
-            </div>
-            <div>
-              <h1 className="fw-bold text-dark fs-2 mb-2">My Cases</h1>
-              <p className="text-gray-600 fs-6 mb-0">
-                View all your cases and connect with interested lawyers.
-              </p>
-            </div>
-          </div>
-          <div className="d-flex align-items-center gap-3">
-            {/* Dark Mode Toggle */}
-            <motion.div 
-              className="modern-icon-container dark-mode-toggle"
-              onClick={toggleDarkMode}
-              title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            >
-              <AnimatePresence mode="wait">
-                <motion.i
-                  key={isDarkMode ? "sun" : "moon"}
-                  className={`modern-icon ${isDarkMode ? 'bi bi-sun' : 'bi bi-moon'}`}
-                  initial={{ rotate: -180, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: 180, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
-                />
-              </AnimatePresence>
-            </motion.div>
-            
-            <div
-              className="modern-icon-container position-relative"
-              onMouseEnter={handleNotificationDropdownEnter}
-              onMouseLeave={handleNotificationDropdownLeave}
-            >
-              <i className="bi bi-bell text-gray-600 fs-4"></i>
-              {unreadCount > 0 && (
-                <span
-                  className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-black"
-                  style={{ fontSize: "0.6rem" }}
-                >
-                  {unreadCount}
-                </span>
-              )}
-              {showNotificationDropdown && <NotificationDropdown />}
-            </div>
-            <div 
-              className="modern-icon-container position-relative"
-              onMouseEnter={handleProfileDropdownEnter}
-              onMouseLeave={handleProfileDropdownLeave}
-            >
-              <img
-                src={getUserPicture(user)}
-              onError={(e) => {
-                e.target.src = blank;
-              }}
-                className="w-40px h-40px rounded-circle cursor-pointer"
-                alt="Profile"
-              />
-              {showProfileDropdown && <ProfileDropdown />}
-            </div>
-          </div>
-        </div>
-      ) : isLawyersPage ? (
-        // Lawyers Page Header
-        <div className="d-flex justify-content-between align-items-center w-100">
-          <div className="d-flex align-items-center">
-            {/* Mobile menu toggle */}
-            <div
-              className="d-flex align-items-center d-lg-none me-3"
-              title="Show sidebar menu"
-            >
-              <div
-                className="btn btn-icon btn-active-color-primary w-35px h-35px"
-                id="kt_app_sidebar_mobile_toggle"
-              >
-                <i className="bi bi-list text-gray-600 fs-1"></i>
-              </div>
-            </div>
-            <div>
-              <h1 className="fw-bold text-dark fs-2 mb-2">
-                Explore Lawyers / Lawyers{" "}
-              </h1>
-              <p className="text-gray-600 fs-6 mb-0">
-                Search, compare, and connect with verified lawyers instantly.
-              </p>
-            </div>
-          </div>
-          <div className="d-flex align-items-center gap-3">
-            {/* Dark Mode Toggle */}
-            <motion.div 
-              className="modern-icon-container dark-mode-toggle"
-              onClick={toggleDarkMode}
-              title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            >
-              <AnimatePresence mode="wait">
-                <motion.i
-                  key={isDarkMode ? "sun" : "moon"}
-                  className={`modern-icon ${isDarkMode ? 'bi bi-sun' : 'bi bi-moon'}`}
-                  initial={{ rotate: -180, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: 180, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
-                />
-              </AnimatePresence>
-            </motion.div>
-            
-            <div
-              className="modern-icon-container position-relative"
-              onMouseEnter={handleNotificationDropdownEnter}
-              onMouseLeave={handleNotificationDropdownLeave}
-            >
-              <i className="bi bi-bell text-gray-600 fs-4"></i>
-              {unreadCount > 0 && (
-                <span
-                  className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-black"
-                  style={{ fontSize: "0.6rem" }}
-                >
-                  {unreadCount}
-                </span>
-              )}
-              {showNotificationDropdown && <NotificationDropdown />}
-            </div>
-            <div 
-              className="modern-icon-container position-relative"
-              onMouseEnter={handleProfileDropdownEnter}
-              onMouseLeave={handleProfileDropdownLeave}
-            >
-              <img
-                src={getUserPicture(user)}
-              onError={(e) => {
-                e.target.src = blank;
-              }}
-                className="w-40px h-40px rounded-circle cursor-pointer"
-                alt="Profile"
-              />
-              {showProfileDropdown && <ProfileDropdown />}
-            </div>
-          </div>
-        </div>
-      ) : isNotificationsPage ? (
-        // Notifications Page Header
-        <div className="d-flex justify-content-between align-items-center w-100">
-          <div className="d-flex align-items-center">
-            {/* Mobile menu toggle */}
-            <div
-              className="d-flex align-items-center d-lg-none me-3"
-              title="Show sidebar menu"
-            >
-              <div
-                className="btn btn-icon btn-active-color-primary w-35px h-35px"
-                id="kt_app_sidebar_mobile_toggle"
-              >
-                <i className="bi bi-list text-gray-600 fs-1"></i>
-              </div>
-            </div>
-            <div>
-              <h1 className="fw-bold text-dark fs-2 mb-2">Notifications</h1>
-              <p className="text-gray-600 fs-6 mb-0">Listing notifications</p>
-            </div>
-          </div>
-          <div className="d-flex align-items-center gap-3">
-            {/* Dark Mode Toggle */}
-            <motion.div 
-              className="modern-icon-container dark-mode-toggle"
-              onClick={toggleDarkMode}
-              title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            >
-              <AnimatePresence mode="wait">
-                <motion.i
-                  key={isDarkMode ? "sun" : "moon"}
-                  className={`modern-icon ${isDarkMode ? 'bi bi-sun' : 'bi bi-moon'}`}
-                  initial={{ rotate: -180, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: 180, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
-                />
-              </AnimatePresence>
-            </motion.div>
-            
-            <div
-              className="modern-icon-container position-relative"
-              onMouseEnter={handleNotificationDropdownEnter}
-              onMouseLeave={handleNotificationDropdownLeave}
-            >
-              <i className="bi bi-bell text-gray-600 fs-4"></i>
-              {unreadCount > 0 && (
-                <span
-                  className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-black"
-                  style={{ fontSize: "0.6rem" }}
-                >
-                  {unreadCount}
-                </span>
-              )}
-              {showNotificationDropdown && <NotificationDropdown />}
-            </div>
-            <div 
-              className="modern-icon-container position-relative"
-              onMouseEnter={handleProfileDropdownEnter}
-              onMouseLeave={handleProfileDropdownLeave}
-            >
-              <img
-                src={getUserPicture(user)}
-              onError={(e) => {
-                e.target.src = blank;
-              }}
-                className="w-40px h-40px rounded-circle cursor-pointer"
-                alt="Profile"
-              />
-              {showProfileDropdown && <ProfileDropdown />}
-            </div>
-          </div>
-        </div>
-      ) : isCaseDetailsPage ? (
-        // Case Summary Page Header
-        <div className="d-flex justify-content-between align-items-center w-100">
-          <div className="d-flex align-items-center">
-            {/* Mobile menu toggle */}
-            <div
-              className="d-flex align-items-center d-lg-none me-3"
-              title="Show sidebar menu"
-            >
-              <div
-                className="btn btn-icon btn-active-color-primary w-35px h-35px"
-                id="kt_app_sidebar_mobile_toggle"
-              >
-                <i className="bi bi-list text-gray-600 fs-1"></i>
-              </div>
-            </div>
-            <div>
-              <h1 className="fw-bold text-dark fs-2 mb-2">Case Summary</h1>
-              <p className="text-gray-600 fs-6 mb-0">Detail</p>
-            </div>
-          </div>
-          <div className="d-flex align-items-center gap-3">
-            {/* Dark Mode Toggle */}
-            <motion.div 
-              className="modern-icon-container dark-mode-toggle"
-              onClick={toggleDarkMode}
-              title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            >
-              <AnimatePresence mode="wait">
-                <motion.i
-                  key={isDarkMode ? "sun" : "moon"}
-                  className={`modern-icon ${isDarkMode ? 'bi bi-sun' : 'bi bi-moon'}`}
-                  initial={{ rotate: -180, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: 180, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
-                />
-              </AnimatePresence>
-            </motion.div>
-            
-            <div
-              className="modern-icon-container position-relative"
-              onMouseEnter={handleNotificationDropdownEnter}
-              onMouseLeave={handleNotificationDropdownLeave}
-            >
-              <i className="bi bi-bell text-gray-600 fs-4"></i>
-              {unreadCount > 0 && (
-                <span
-                  className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-black"
-                  style={{ fontSize: "0.6rem" }}
-                >
-                  {unreadCount}
-                </span>
-              )}
-              {showNotificationDropdown && <NotificationDropdown />}
-            </div>
-            <div 
-              className="modern-icon-container position-relative"
-              onMouseEnter={handleProfileDropdownEnter}
-              onMouseLeave={handleProfileDropdownLeave}
-            >
-              <img
-                src={getUserPicture(user)}
-              onError={(e) => {
-                e.target.src = blank;
-              }}
-                className="w-40px h-40px rounded-circle cursor-pointer"
-                alt="Profile"
-              />
-              {showProfileDropdown && <ProfileDropdown />}
-            </div>
-          </div>
-        </div>
-      ) : isEmployeeDetailsPage ? (
-        // Employee Details Page Header
-        <div className="d-flex justify-content-between align-items-center w-100">
-          <div className="d-flex align-items-center">
-            {/* Mobile menu toggle */}
-            <div
-              className="d-flex align-items-center d-lg-none me-3"
-              title="Show sidebar menu"
-            >
-              <div
-                className="btn btn-icon btn-active-color-primary w-35px h-35px"
-                id="kt_app_sidebar_mobile_toggle"
-              >
-                <i className="bi bi-list text-gray-600 fs-1"></i>
-              </div>
-            </div>
-            <div>
-              <h1 className="fw-bold text-dark fs-2 mb-2">Employee Details</h1>
-              <p className="text-gray-600 fs-6 mb-0">
-                View and manage employee information.
-              </p>
-            </div>
-          </div>
-          <div className="d-flex align-items-center gap-3">
-            {/* Dark Mode Toggle */}
-            <motion.div 
-              className="modern-icon-container dark-mode-toggle"
-              onClick={toggleDarkMode}
-              title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            >
-              <AnimatePresence mode="wait">
-                <motion.i
-                  key={isDarkMode ? "sun" : "moon"}
-                  className={`modern-icon ${isDarkMode ? 'bi bi-sun' : 'bi bi-moon'}`}
-                  initial={{ rotate: -180, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: 180, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
-                />
-              </AnimatePresence>
-            </motion.div>
-            
-            <div
-              className="modern-icon-container position-relative"
-              onMouseEnter={handleNotificationDropdownEnter}
-              onMouseLeave={handleNotificationDropdownLeave}
-            >
-              <i className="bi bi-bell text-gray-600 fs-4"></i>
-              {unreadCount > 0 && (
-                <span
-                  className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-black"
-                  style={{ fontSize: "0.6rem" }}
-                >
-                  {unreadCount}
-                </span>
-              )}
-              {showNotificationDropdown && <NotificationDropdown />}
-            </div>
-            <div 
-              className="modern-icon-container position-relative"
-              onMouseEnter={handleProfileDropdownEnter}
-              onMouseLeave={handleProfileDropdownLeave}
-            >
-              <img
-                src={getUserPicture(user)}
-              onError={(e) => {
-                e.target.src = blank;
-              }}
-                className="w-40px h-40px rounded-circle cursor-pointer"
-                alt="Profile"
-              />
-              {showProfileDropdown && <ProfileDropdown />}
-            </div>
-          </div>
-        </div>
-      ) : isEmployeesPage ? (
-        // Employees Page Header
-        <div className="d-flex justify-content-between align-items-center w-100">
-          <div className="d-flex align-items-center">
-            {/* Mobile menu toggle */}
-            <div
-              className="d-flex align-items-center d-lg-none me-3"
-              title="Show sidebar menu"
-            >
-              <div
-                className="btn btn-icon btn-active-color-primary w-35px h-35px"
-                id="kt_app_sidebar_mobile_toggle"
-              >
-                <i className="bi bi-list text-gray-600 fs-1"></i>
-              </div>
-            </div>
-            <div>
-              <h1 className="fw-bold text-dark fs-2 mb-2">Team</h1>
-              <p className="text-gray-600 fs-6 mb-0">
-                Add your team members and send invites.
-              </p>
-            </div>
-          </div>
-          <div className="d-flex align-items-center gap-3">
-            {/* Dark Mode Toggle */}
-            <motion.div 
-              className="modern-icon-container dark-mode-toggle"
-              onClick={toggleDarkMode}
-              title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            >
-              <AnimatePresence mode="wait">
-                <motion.i
-                  key={isDarkMode ? "sun" : "moon"}
-                  className={`modern-icon ${isDarkMode ? 'bi bi-sun' : 'bi bi-moon'}`}
-                  initial={{ rotate: -180, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: 180, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
-                />
-              </AnimatePresence>
-            </motion.div>
-            
-            <div
-              className="modern-icon-container position-relative"
-              onMouseEnter={handleNotificationDropdownEnter}
-              onMouseLeave={handleNotificationDropdownLeave}
-            >
-              <i className="bi bi-bell text-gray-600 fs-4"></i>
-              {unreadCount > 0 && (
-                <span
-                  className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-black"
-                  style={{ fontSize: "0.6rem" }}
-                >
-                  {unreadCount}
-                </span>
-              )}
-              {showNotificationDropdown && <NotificationDropdown />}
-            </div>
-            <div 
-              className="modern-icon-container position-relative"
-              onMouseEnter={handleProfileDropdownEnter}
-              onMouseLeave={handleProfileDropdownLeave}
-            >
-              <img
-                src={getUserPicture(user)}
-              onError={(e) => {
-                e.target.src = blank;
-              }}
-                className="w-40px h-40px rounded-circle cursor-pointer"
-                alt="Profile"
-              />
-              {showProfileDropdown && <ProfileDropdown />}
-            </div>
-          </div>
-        </div>
-      ) : (
-        // Default Header Layout
-        <div className="modern-header-layout flex-column flex-lg-row w-100 gap-3">
-          <div className="modern-header-primary d-flex align-items-center flex-grow-1 gap-3 w-100">
-            {/* Mobile menu toggle */}
-            <div
-              className="d-flex align-items-center d-lg-none"
-              title="Show sidebar menu"
-            >
-              <div
-                className="btn btn-icon btn-active-color-primary w-35px h-35px"
-                id="kt_app_sidebar_mobile_toggle"
-              >
-                <i className="bi bi-list text-gray-600 fs-1"></i>
-              </div>
-            </div>
-
-            {/* Search Bar */}
-            <div className="modern-search-container flex-grow-1">
-              <div className="modern-search-wrapper position-relative">
-                <input
-                  type="search"
-                  name="search"
-                  placeholder="Search"
-                  className="modern-search-input"
-                />
-                <i className="bi bi-search modern-search-icon position-absolute"></i>
-              </div>
-            </div>
-          </div>
-
-          {/* Right side icons */}
-          <div className="modern-header-actions d-flex align-items-center justify-content-end gap-3 w-100 w-lg-auto">
-            {/* Dark Mode Toggle */}
-            <motion.div 
-              className="modern-icon-container dark-mode-toggle"
-              onClick={toggleDarkMode}
-              title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            >
-              <AnimatePresence mode="wait">
-                <motion.i
-                  key={isDarkMode ? "sun" : "moon"}
-                  className={`modern-icon ${isDarkMode ? 'bi bi-sun' : 'bi bi-moon'}`}
-                  initial={{ rotate: -180, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: 180, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
-                />
-              </AnimatePresence>
-            </motion.div>
-
-            {/* Messages Icon */}
-            <NavLink to="/chat" className="text-decoration-none">
-              <div className="modern-icon-container">
-                <i className="bi bi-chat-dots modern-icon"></i>
-                {unreadChatCount > 0 && (
-                  <span className="chat-counter">{unreadChatCount > 9 ? '9+' : unreadChatCount}</span>
-                )}
-              </div>
-            </NavLink>
-
-            {/* Notifications Icon */}
-            <div
-              className="modern-notification-container position-relative"
-              onMouseEnter={handleNotificationDropdownEnter}
-              onMouseLeave={handleNotificationDropdownLeave}
-            >
-              <i className="bi bi-bell modern-icon"></i>
-              {unreadCount > 0 && (
-                <span className="modern-notification-indicator">{unreadCount > 9 ? '9+' : unreadCount}</span>
-              )}
-              {showNotificationDropdown && <NotificationDropdown />}
-            </div>
-
-            {/* User Profile */}
-            <div
-              className="app-navbar-item ms-1 ms-lg-3 position-relative"
-              onMouseEnter={handleProfileDropdownEnter}
-              onMouseLeave={handleProfileDropdownLeave}
-            >
-              <div className="cursor-pointer symbol symbol-35px symbol-md-40px profile-dropdown">
-                <img 
-                  src={getUserPicture(user)} 
-                  alt="user" 
-                  className="modern-profile-image"
-                  onError={(e) => {
-                    e.target.src = blank;
-                  }}
-                />
-              </div>
-              {showProfileDropdown && <ProfileDropdown />}
-            </div>
-          </div>
-        </div>
-      )}
+      </div>
 
       {/* Logout Modal */}
       <LogoutModal
