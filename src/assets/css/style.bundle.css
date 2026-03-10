@@ -44365,7 +44365,7 @@ code:not([class*=language-]) {
 }
 
 .form-check-custom.form-check-solid .form-check-input:checked {
-    background-color: var(--kt-form-check-input-checked-bg-color-solid)
+    background-color: var(--bs-dark)
 }
 
 .form-check-custom.form-check-success .form-check-input:checked {
@@ -62759,7 +62759,7 @@ body.sidebar-open {
 }
 
 .my-lawyers-message-bubble {
-    max-width: 70%;
+    max-width: 100%;
 }
 
 .my-lawyers-message-input {

@@ -12,6 +12,9 @@ import notificationProfile from "../assets/images/notification-profile.png";
 // import loginBgVideo from "../assets/login-bg-video.mp4"; // Moved to public folder
 import "../assets/css/dark-mode.css";
 import "./Login.css";
+import { initFirebaseMessaging, getStoredFcmToken } from "../services/firebaseMessaging";
+import { signInWithPopup } from "firebase/auth";
+import { auth, googleProvider } from "../services/firebase";
 
 const Login = () => {
   // Load saved credentials from localStorage
@@ -32,48 +35,18 @@ const Login = () => {
   
   const [email, setEmail] = useState(savedCredentials?.email || "");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [otp, setOtp] = useState("");
   const [isLoader, setIsLoader] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [currentSlide, setCurrentSlide] = useState(0);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [showOtpInput, setShowOtpInput] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(
     localStorage.getItem("darkMode") === "true" || false
   );
+  const [deviceToken, setDeviceToken] = useState();
   const navigate = useNavigate();
 
-  // Slider data - COMMENTED OUT FOR VIDEO BACKGROUND
-  // const sliderData = [
-  //   {
-  //     id: 1,
-  //     title: "Professional Legal Services",
-  //     description:
-  //       "Get expert legal advice from qualified attorneys. Our platform connects you with experienced lawyers for all your business and personal legal needs.",
-  //     image: logoImg,
-  //   },
-  //   {
-  //     id: 2,
-  //     title: "Legal Solutions Made Simple",
-  //     description:
-  //       "Connect with experienced lawyers and get expert legal advice for all your business needs. Streamlined process for quick and effective legal solutions.",
-  //     image: logoImg2,
-  //   },
-  //   {
-  //     id: 3,
-  //     title: "Expert Legal Guidance",
-  //     description:
-  //       "Access a network of qualified attorneys ready to help you navigate complex legal challenges. Get professional guidance when you need it most.",
-  //     image: logoImg,
-  //   },
-  //   {
-  //     id: 4,
-  //     title: "Secure & Confidential",
-  //     description:
-  //       "Your legal matters are handled with the highest level of security and confidentiality. Trust us with your sensitive legal information and documents.",
-  //     image: logoImg2,
-  //   },
-  // ];
+
 
   useEffect(() => {
     // Check if user is already authenticated
@@ -116,6 +89,21 @@ const Login = () => {
     };
   }, [isDarkMode]);
 
+  useEffect(() => {
+    // const existing = getStoredFcmToken();
+    // if (existing) {
+    //     console.log("Existing FCM TOKEN:", existing);
+    //   setDeviceToken(existing);
+    //   return;
+    // }
+    initFirebaseMessaging().then((token) => {
+      if (token) {
+        console.log("NEW FCM TOKEN:", token);
+        setDeviceToken(token);
+      }
+    });
+  }, []);
+
 
 
   const handleLogin = async (e) => {
@@ -136,16 +124,30 @@ const Login = () => {
 
       setIsLoader(true);
       try {
-        const response = await AuthService.verifyOTP(email, otp);
+        const response = await AuthService.verifyOTP(
+          email,
+          otp,
+          deviceToken 
+        );
         
         if (response.status && response.data) {
           // Save login credentials to localStorage
           var loggedUser = response.data.user;
 
+          if (response.data.is_team_member) {
+            loggedUser = response.data.team;
+          }
+
           loggedUser.auth_token = response.data.auth_token;
           loggedUser.lastLogin = new Date().toISOString();
 
           localStorage.setItem("loggedUser", JSON.stringify(loggedUser));
+           // Handle permissions
+          let permissions = [];
+          if (response.data.permissions) {
+                permissions = response.data.permissions;
+          }
+          localStorage.setItem('permissions', JSON.stringify(permissions));
 
           toast.success("Login successful!");
           navigate("/dashboard");
@@ -162,22 +164,70 @@ const Login = () => {
       return;
     }
 
-    // Step 1: Send OTP to email
+    // Step 1: Login with Email & Password
     setIsLoader(true);
     try {
-      const language = localStorage.getItem('admin_lang') || 'en';
-      const response = await AuthService.userLogin(email, language);
+      if (!password) {
+        toast.error("Please enter your password");
+        setIsLoader(false);
+        return;
+      }
+
+      const response = await AuthService.passwordLogin(
+        email,
+        password,
+        deviceToken
+      );
       
       if (response.status) {
-        toast.success(response.message || "OTP sent to your email. Please check your inbox.");
-        setShowOtpInput(true);
+        if (response.data && response.data.is_2fa_enabled) {
+          toast.success(response.message || "OTP sent to your email. Please check your inbox.");
+          setShowOtpInput(true);
+        } else {
+          // User is logged in by AuthService saving logic
+          toast.success("Login successful!");
+          navigate("/dashboard");
+        }
       } else {
-        toast.error(response.message || "Failed to send OTP. Please try again.");
+        toast.error(response.message || "Login failed. Please check your credentials.");
       }
     } catch (error) {
       console.error("Login failed:", error);
       const errorMessage = error.response?.data?.message || "Login failed. Please try again.";
       toast.error(errorMessage);
+    } finally {
+      setIsLoader(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    if (!agreeToTerms) {
+      toast.error("Please agree to the Terms and Conditions first.");
+      return;
+    }
+
+    try {
+      setIsLoader(true);
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      
+      // Send user details to backend
+      const response = await AuthService.googleLogin(
+        user.displayName,
+        user.email,
+        user.uid,
+        deviceToken 
+      );
+      
+      if (response.status) {
+        toast.success(response.message || "Google Login successful!");
+        navigate("/dashboard");
+      } else {
+        toast.error(response.message || "Google Login failed.");
+      }
+    } catch (error) {
+      console.error("Google Login Error:", error);
+      toast.error(error.message || "Google Login failed. Please try again.");
     } finally {
       setIsLoader(false);
     }
@@ -281,22 +331,29 @@ const Login = () => {
             </div>
 
             {/* Password Field - Hidden when OTP input is shown */}
-            {/* {!showOtpInput && (
+            {!showOtpInput && (
               <div className="form-group" data-aos="fade-up" data-aos-delay="600">
                 <label className="form-label" style={{ fontSize: "18px" }}>Password</label>
-                <div className="password-container">
+                <div className="password-container position-relative">
                   <input
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="form-input rounded-pill login-page-inp"
-                    placeholder="Password (Optional)"
-                    autoComplete="off"
-                    style={{ width: "398px", height: "67px", fontSize: "18px", paddingLeft: "30px", paddingRight: "30px" }}
+                    placeholder="Enter Password"
+                    autoComplete="current-password"
+                    style={{ width: "398px", height: "67px", fontSize: "18px", paddingLeft: "30px", paddingRight: "60px" }}
                   />
+                  <span 
+                    className="position-absolute top-50 translate-middle-y cursor-pointer" 
+                    style={{ right: "20px", cursor: "pointer", zIndex: 10 }}
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    <i className={`bi bi-eye${showPassword ? '-slash' : ''} fs-4 text-muted`}></i>
+                  </span>
                 </div>
               </div>
-            )} */}
+            )}
 
             {/* OTP Field - Shown after email is submitted */}
             {showOtpInput && (
@@ -397,12 +454,19 @@ const Login = () => {
             )}
 
             {/* Google Login Button */}
-            <button type="button" className="google-button rounded-pill login-btn-google" disabled={!agreeToTerms} style={{ width: "398px", height: "67px", fontSize: "18px", opacity: agreeToTerms ? 1 : 0.6 }} data-aos="fade-up" data-aos-delay="800">
+            {/* <button 
+              type="button" 
+              className="google-button rounded-pill login-btn-google" 
+              onClick={handleGoogleLogin}
+              style={{ width: "398px", height: "67px", fontSize: "18px", opacity: agreeToTerms ? 1 : 0.6 }} 
+              data-aos="fade-up" 
+              data-aos-delay="800"
+            >
               <span className="google-icon">
                 <img src={G} alt="" className="w-35px h-35px" />
               </span>
               Continue With Google
-            </button>
+            </button> */}
           </form>
         </div>
 

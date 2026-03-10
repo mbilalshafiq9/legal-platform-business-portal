@@ -2,7 +2,7 @@
   "name": "legal-platform-portal",
   "version": "0.1.0",
   "private": true,
-  "homepage": "/user_portal",
+  "homepage": "/business",
   "dependencies": {
     "@reduxjs/toolkit": "^2.3.0",
     "@stripe/react-stripe-js": "^5.4.1",
@@ -15,6 +15,7 @@
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",
     "chart.js": "^4.4.6",
+    "firebase": "^9.23.0",
     "framer-motion": "^12.23.24",
     "lottie-react": "^2.4.1",
     "moment": "^2.30.1",

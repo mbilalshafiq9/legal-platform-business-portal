@@ -1,7 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
-import AuthService from "../services/AuthService";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, NavLink } from "react-router-dom";
-import { Dropdown } from "primereact/dropdown";
 import Lottie from "lottie-react";
 
 import notificationProfile from "../assets/images/notification-profile.png";
@@ -10,10 +8,13 @@ import postYourLegal from "../assets/images/postYourLegal.png";
 import hireLawyer from "../assets/images/hireLawyer.png";
 import createNewCase from "../assets/images/createNewCase.png";
 import successAnimation from "../assets/images/Succes.json";
+import noData from "../assets/images/no-data.png";
 import profileIconAnimation from "../assets/images/profile-icon.json";
 
 import { toast } from "react-toastify";
 import ApiService from "../services/ApiService";
+import CreateCaseModal from "../components/CreateCaseModal";
+import AskQuestionOffcanvas from "../components/AskQuestionOffcanvas";
 import "../assets/css/dashboard-hover-fixes.css";
 import "../assets/css/siri-border-animation.css";
 import "../assets/css/welcome-message.css";
@@ -42,41 +43,12 @@ const Dashboard = () => {
   const [postQuestionJurisdiction, setPostQuestionJurisdiction] =
     useState(null);
   const [showPostQuestionJurisdictionDropdown, setShowPostQuestionJurisdictionDropdown] = useState(false);
-  const [createCaseJurisdiction, setCreateCaseJurisdiction] = useState(null);
-  const [createCaseConsultantType, setCreateCaseConsultantType] =
-    useState(null);
   const [postQuestionText, setPostQuestionText] = useState("");
-  const [createCaseLawType, setCreateCaseLawType] = useState(null);
-  const [createCaseSubCategory, setCreateCaseSubCategory] = useState(null);
   const postQuestionJurisdictionRef = useRef(null);
+  const [jurisdictionSearch, setJurisdictionSearch] = useState("");
 
-  // Select options
-  const jurisdictionOptions = [
-    { label: "United States", value: "us" },
-    { label: "United Kingdom", value: "uk" },
-    { label: "Canada", value: "ca" },
-    { label: "Australia", value: "au" },
-  ];
-
-  const consultantTypeOptions = [
-    { label: "Individual Lawyer", value: "individual" },
-    { label: "Law Firm", value: "firm" },
-    { label: "Legal Consultant", value: "consultant" },
-  ];
-
-  const lawTypeOptions = [
-    { label: "Criminal Law", value: "criminal" },
-    { label: "Civil Law", value: "civil" },
-    { label: "Corporate Law", value: "corporate" },
-    { label: "Family Law", value: "family" },
-  ];
-
-  const subCategoryOptions = [
-    { label: "Traffic Violations", value: "traffic" },
-    { label: "White Collar Crime", value: "white-collar" },
-    { label: "Drug Offenses", value: "drug" },
-    { label: "Violent Crimes", value: "violent" },
-  ];
+  // Dynamic Options
+  const [jurisdictionOptions, setJurisdictionOptions] = useState([]);
 
   const handleAddQuestionClick = () => {
     setShowPostQuestion(true);
@@ -90,6 +62,32 @@ const Dashboard = () => {
       setShowPostQuestionJurisdictionDropdown(false);
     }, 300); // Match animation duration
   };
+
+  // Fetch dashboard data
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      // Don't set loading true here to avoid full page flicker on refresh
+      const response = await ApiService.request({
+        method: "GET",
+        url: "getBusinessDashboard",
+      });
+      const data = response.data;
+      if (data.status) {
+        setUserInfo(data.data.user_info || { name: "", location: "" });
+        setRecentQuestion(data.data.recent_question || null);
+        setLawyerResponses(data.data.lawyer_responses || []);
+        setActiveLawyers(data.data.active_lawyers || []);
+        setInactiveLawyers(data.data.inactive_lawyers || []);
+        setCases(data.data.cases || []);
+        setNotifications(data.data.notifications || []);
+      } else {
+        toast.error(data.message || "Failed to load dashboard data");
+      }
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      toast.error("Failed to load dashboard data");
+    }
+  }, []);
 
   const handlePostQuestion = async () => {
     if (!postQuestionText.trim()) {
@@ -123,8 +121,9 @@ const Dashboard = () => {
         setTimeout(() => {
           setShowPostQuestion(false);
         }, 300);
+        
         // Refresh dashboard data
-        // You can add a function to refresh the dashboard data here
+        fetchDashboardData();
       } else {
         toast.error(data.message || "Failed to post question");
       }
@@ -134,39 +133,36 @@ const Dashboard = () => {
     }
   };
 
-  // Fetch dashboard data
+  // Initial Data Fetch
   useEffect(() => {
-    const fetchDashboardData = async () => {
+    const initData = async () => {
+      setLoading(true);
+      await fetchDashboardData();
+      
+      // Fetch jurisdictions for Post Question dropdown
       try {
-        setLoading(true);
-        const response = await ApiService.request({
+        const dropdownResponse = await ApiService.request({
           method: "GET",
-          url: "getBusinessDashboard",
+          url: "getDropdownData",
         });
-        const data = response.data;
-        if (data.status) {
-          setUserInfo(data.data.user_info || { name: "", location: "" });
-          setRecentQuestion(data.data.recent_question || null);
-          setLawyerResponses(data.data.lawyer_responses || []);
-          setActiveLawyers(data.data.active_lawyers || []);
-          setInactiveLawyers(data.data.inactive_lawyers || []);
-          setCases(data.data.cases || []);
-          setNotifications(data.data.notifications || []);
-        } else {
-          toast.error(data.message || "Failed to load dashboard data");
+        const dropdownData = dropdownResponse.data;
+        if (dropdownData.status && dropdownData.data && dropdownData.data.jurisdictions) {
+          const options = dropdownData.data.jurisdictions.map(j => ({
+            label: j.name,
+            value: j.id
+          }));
+          setJurisdictionOptions(options);
         }
       } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-        toast.error("Failed to load dashboard data");
+        console.error("Error fetching jurisdictions:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchDashboardData();
-  }, []);
+    initData();
+  }, [fetchDashboardData]);
 
-  // Close post question jurisdiction dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (postQuestionJurisdictionRef.current && !postQuestionJurisdictionRef.current.contains(event.target)) {
@@ -203,7 +199,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="d-flex flex-column flex-column-fluid header-main dashboard--inter-font">
+    <div className="d-flex flex-column flex-column-fluid dashboard--inter-font">
       <div id="kt_app_content" className="app-content flex-column-fluid">
         <div
           id="kt_app_content_container"
@@ -273,7 +269,7 @@ const Dashboard = () => {
                         <img
                           src={postYourLegal}
                           alt="Post Your Legal"
-                          className="rounded-circle postYourLegalImage"
+                          className="w-100px h-100px postYourLegalImage"
                         />
                       </div>
                     </div>
@@ -312,7 +308,7 @@ const Dashboard = () => {
                           <img
                             src={hireLawyer}
                             alt="Hire Lawyer"
-                            className="rounded-circle hireLawyerImage"
+                            className="w-100px h-100px hireLawyerImage"
                           />
                         </div>
                       </div>
@@ -349,7 +345,7 @@ const Dashboard = () => {
                         <img
                           src={createNewCase}
                           alt="Create New Case"
-                          className="rounded-circle createNewCaseImage"
+                          className="w-125px h-100px createNewCaseImage"
                         />
                       </div>
                     </div>
@@ -397,7 +393,9 @@ const Dashboard = () => {
                           )}
                         </>
                       ) : (
-                        <p className="text-gray-600">No questions posted yet</p>
+                        <p className="text-gray-600">
+                          <img src={noData} alt="No Data" className="w-150px mt-3" /> <br />
+                          No questions posted yet</p>
                       )}
                     </div>
 
@@ -439,7 +437,9 @@ const Dashboard = () => {
                           </div>
                         ))
                       ) : (
-                        <p className="text-gray-600">No lawyer responses yet</p>
+                        <p className="text-gray-600">
+                          <img src={noData} alt="No Data" className="w-150px mt-3" /> <br />
+                          No lawyer responses yet</p>
                       )}
                     </div>
                   </div>
@@ -551,13 +551,15 @@ const Dashboard = () => {
                     </div>
                     ))
                   ) : (
-                    <p className="text-gray-600">No {activeTab === "active" ? "active" : "inactive"} lawyers found</p>
+                    <p className="text-gray-600">
+                          <img src={noData} alt="No Data" className="w-150px mt-3" /> <br />
+                      No {activeTab === "active" ? "active" : "inactive"} lawyers found</p>
                   )}
                 </div>
               </div>
             </div>
 
-            <div className="col-md-4">
+            <div className="col-md-4 mt-4">
               {/* My Cases */}
               <div
                 className="card mb-6 shadow my-cases-card-hover"
@@ -567,13 +569,9 @@ const Dashboard = () => {
                 <div className="card-body p-4">
                   <div className="d-flex justify-content-between align-items-center mb-4">
                     <h2 className="fw-bold text-dark mb-0">My Cases</h2>
-                    <NavLink to={"/my-cases"}>
-                      <a
-                        href="#"
-                        className="text-muted fw-semibold text-decoration-none"
-                      >
+                    <NavLink to={"/my-cases"} 
+                        className="text-muted fw-semibold text-decoration-none">
                         See All
-                      </a>
                     </NavLink>
                   </div>
 
@@ -661,363 +659,19 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Create Case Offcanvas */}
-      {showCreateCase && (
-        <div
-          className="offcanvas offcanvas-end show dashboard-create-case-offcanvas"
-          tabIndex="-1"
-        >
-          <div className="offcanvas-header border-bottom p-3 p-md-4">
-            <div className="d-flex justify-content-between align-items-center w-100">
-              <h5 className="mb-0 fw-bold fs-5 fs-md-4">Create a Case</h5>
-              <button
-                type="button"
-                className="btn-close"
-                onClick={() => setShowCreateCase(false)}
-              ></button>
-            </div>
-          </div>
+      <AskQuestionOffcanvas
+        show={showPostQuestion}
+        onClose={() => setShowPostQuestion(false)}
+        jurisdictionOptions={jurisdictionOptions}
+        onSuccess={fetchDashboardData}
+      />
 
-          <div className="offcanvas-body p-0 d-flex flex-column dashboard-offcanvas-body">
-            <div className="p-3 p-md-4 flex-grow-1 dashboard-offcanvas-content">
-              {/* Top Row Selects */}
-              <div className="row g-2 g-md-3 mb-3">
-                <div className="col-12 col-md-6">
-                  <Dropdown
-                    value={createCaseJurisdiction}
-                    onChange={(e) => setCreateCaseJurisdiction(e.value)}
-                    options={jurisdictionOptions}
-                    placeholder="Select Jurisdiction"
-                    className="w-100"
-                    style={{ height: "60px" }}
-                    panelClassName="dashboard-dropdown-panel"
-                    scrollHeight="400px"
-                  />
-                </div>
-                <div className="col-12 col-md-6">
-                  <Dropdown
-                    value={createCaseConsultantType}
-                    onChange={(e) => setCreateCaseConsultantType(e.value)}
-                    options={consultantTypeOptions}
-                    placeholder="Type of legal consultant"
-                    className="w-100"
-                    style={{ height: "60px" }}
-                    panelClassName="dashboard-dropdown-panel"
-                    scrollHeight="400px"
-                  />
-                </div>
-              </div>
-
-              {/* Second Row Selects */}
-              <div className="row g-2 g-md-3 mb-3">
-                <div className="col-12 col-md-6">
-                  <Dropdown
-                    value={createCaseLawType}
-                    onChange={(e) => setCreateCaseLawType(e.value)}
-                    options={lawTypeOptions}
-                    placeholder="Criminal Law"
-                    className="w-100"
-                    style={{ height: "60px" }}
-                    panelClassName="dashboard-dropdown-panel"
-                    scrollHeight="400px"
-                  />
-                </div>
-                <div className="col-12 col-md-6">
-                  <Dropdown
-                    value={createCaseSubCategory}
-                    onChange={(e) => setCreateCaseSubCategory(e.value)}
-                    options={subCategoryOptions}
-                    placeholder="Select Sub Categories"
-                    className="w-100"
-                    style={{ height: "60px" }}
-                    panelClassName="dashboard-dropdown-panel"
-                    scrollHeight="400px"
-                  />
-                </div>
-              </div>
-
-              {/* Explain Case */}
-              <div className="mb-3">
-                <textarea
-                  className="form-control form-control-lg dashboard-textarea"
-                  placeholder="Explain Your Case"
-                  rows="4"
-                ></textarea>
-              </div>
-
-              {/* Attach Document */}
-              <div className="mb-3">
-                <div className="d-flex align-items-center justify-content-start border border-2 border-dashed rounded dashboard-file-upload p-3">
-                  <div className="p-2 p-md-3 me-3 rounded-1 dashboard-file-upload-icon">
-                    <i className="bi bi-paperclip fs-4 fs-md-3 d-inline-block dashboard-paperclip-icon"></i>
-                  </div>
-
-                  <p className="text-muted mb-0 fs-6">Attach Document</p>
-                </div>
-              </div>
-
-              {/* Accept Terms */}
-              <div className="form-check mb-4 mt-5">
-                <input
-                  className="form-check-input"
-                  type="checkbox"
-                  id="acceptTermsDashboard"
-                />
-                <label
-                  className="form-check-label ms-2"
-                  htmlFor="acceptTermsDashboard"
-                >
-                  Accept all Privacy policy & Terms & conditions
-                </label>
-              </div>
-            </div>
-
-            {/* Submit Button - fixed at bottom */}
-            <div className="p-3 p-md-4 border-top dashboard-submit-footer">
-              <button className="btn text-white rounded-pill w-100 dashboard-submit-button py-3 py-md-2">
-                Submit
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Backdrop for Create Case */}
-      {showCreateCase && (
-        <div
-          className="offcanvas-backdrop fade show dashboard-backdrop"
-          onClick={() => setShowCreateCase(false)}
-        ></div>
-      )}
-
-      {/* Post Question Offcanvas */}
-      {showPostQuestion && (
-        <div
-        className="offcanvas offcanvas-end show"
-        tabIndex="-1"
-        style={{
-          position: "fixed",
-          top: 0,
-          right: 0,
-          bottom: 0,
-          visibility: "visible",
-          width: "633px",
-          transition: "all 0.3s ease-out",
-          borderRadius: "13px",
-          margin: "20px",
-          zIndex: 1045,
-          transform: isClosing ? "translateX(100%)" : "translateX(0)",
-          animation: isClosing ? "slideOutToRight 0.3s ease-in" : "slideInFromRight 0.3s ease-out",
-          backgroundColor: "#fff",
-        }}
-      >
-        <div className="offcanvas-header border-bottom" style={{ borderTopLeftRadius: "15px", borderTopRightRadius: "15px" }}>
-          <div className="d-flex justify-content-between align-items-center w-100">
-            <h5 className="mb-0 fw-bold">Post Question</h5>
-            <button
-              type="button"
-              className="btn-close"
-              onClick={handleClosePostQuestion}
-            ></button>
-          </div>
-        </div>
-
-        <div className="offcanvas-body p-4" style={{ borderBottomLeftRadius: "15px", borderBottomRightRadius: "15px" }}>
-          {/* Question Input */}
-          <div className="mb-3 siri-border-animation">
-            <textarea
-              className="form-control"
-              placeholder="Explain Your Question"
-              value={postQuestionText}
-              onChange={(e) => setPostQuestionText(e.target.value)}
-              style={{
-                resize: "none",
-                width: "606px",
-                height: "217px",
-                border: "1px solid #C9C9C9",
-                borderRadius: "8px",
-                position: "relative",
-                zIndex: 1,
-                backgroundColor: "#ffffff",
-              }}
-            ></textarea>
-          </div>
-
-          {/* Jurisdiction Dropdown */}
-          <div className="mb-3">
-            <div className="position-relative" ref={postQuestionJurisdictionRef}>
-              <button
-                type="button"
-                className="form-select d-flex align-items-center justify-content-between"
-                onClick={() => setShowPostQuestionJurisdictionDropdown(!showPostQuestionJurisdictionDropdown)}
-                style={{
-                  width: "606px",
-                  height: "79px",
-                  border: "1px solid #C9C9C9",
-                  borderRadius: "8px",
-                  backgroundColor: "#fff",
-                  cursor: "pointer",
-                  textAlign: "left",
-                  paddingLeft: "12px",
-                  paddingRight: "40px",
-                }}
-              >
-                <span style={{ color: postQuestionJurisdiction ? "#000" : "#6c757d" }}>
-                  {postQuestionJurisdiction 
-                    ? jurisdictionOptions.find(j => j.value === postQuestionJurisdiction)?.label || "Jurisdiction"
-                    : "Jurisdiction"
-                  }
-                </span>
-                <i className={`bi bi-chevron-${showPostQuestionJurisdictionDropdown ? "up" : "down"} position-absolute end-0 translate-middle-y me-3 text-gray-600`} style={{ top: "50%" }}></i>
-              </button>
-              
-              {showPostQuestionJurisdictionDropdown && (
-                <div 
-                  className="position-absolute bg-white border rounded shadow-lg"
-                  style={{ 
-                    zIndex: 1050, 
-                    width: "606px", 
-                    maxHeight: "400px", 
-                    overflowY: "auto",
-                    overflowX: "hidden",
-                    top: "100%",
-                    marginTop: "8px",
-                    bottom: "auto"
-                  }}
-                >
-                  {jurisdictionOptions.map((jurisdiction) => (
-                    <button
-                      key={jurisdiction.value}
-                      type="button"
-                      className="btn btn-light w-100 text-start px-3 py-2 border-0"
-                      onClick={() => {
-                        setPostQuestionJurisdiction(jurisdiction.value);
-                        setShowPostQuestionJurisdictionDropdown(false);
-                      }}
-                      style={{ 
-                        fontSize: "0.9rem",
-                        backgroundColor: postQuestionJurisdiction === jurisdiction.value ? "#f0f0f0" : "#fff"
-                      }}
-                    >
-                      {jurisdiction.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* File Upload */}
-          <div className="mb-3">
-            <div
-              className="d-flex align-items-center justify-content-start border border-2 border-dashed rounded"
-              style={{
-                border: "1.5px dashed #C9C9C9",
-                width: "606px",
-                height: "80px",
-                borderRadius: "8px",
-              }}
-            >
-              <div
-                className="p-3 mx-3 rounded-1"
-                style={{
-                  backgroundColor: "#FDFDFD",
-                  border: "1px dashed #BEBEBE",
-                }}
-              >
-                <i
-                  className="bi bi-paperclip fs-3 d-inline-block"
-                  style={{
-                    transform: "rotate(45deg)",
-                    display: "inline-block",
-                  }}
-                ></i>
-              </div>
-
-              <p className="text-muted mb-0">Attach Document</p>
-            </div>
-          </div>
-
-          {/* How it works Section */}
-          <div className="mb-3">
-            <h6 className="fw-bold mb-2">How it works</h6>
-            <div className="d-flex align-items-start gap-5 my-5">
-              <i
-                className="bi bi-moon-fill text-black"
-                style={{
-                  transform: "rotate(35deg)",
-                  display: "inline-block",
-                }}
-              ></i>
-              <small className="text-muted">
-                Ask your question and see the answer in Questions & Answers.
-              </small>
-            </div>
-            <div className="d-flex align-items-start gap-5 my-5">
-              <i
-                className="bi bi-moon-fill text-black"
-                style={{
-                  transform: "rotate(35deg)",
-                  display: "inline-block",
-                }}
-              ></i>
-              <small className="text-muted">
-                You will be notified when a lawyer answers.
-              </small>
-            </div>
-          </div>
-
-          {/* Post Question Fee */}
-          <div
-            className="mb-3 rounded-4"
-            style={{
-              border: "1px solid #D3D3D3",
-              width: "606px",
-              height: "92px",
-              borderRadius: "8px",
-            }}
-          >
-            <div className="d-flex justify-content-between align-items-center h-100 rounded">
-              <div className="p-3">
-                <h6 className="fw-bold mb-1">Post Question Fee</h6>
-                <small className="text-muted">1 Question post only</small>
-              </div>
-              <div
-                className="text-end px-5 h-100 d-flex flex-column justify-content-center"
-                style={{ borderLeft: "1px solid #D3D3D3" }}
-              >
-                <div className="fw-bold">USD</div>
-                <div className="fw-bold fs-5">1.00</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Submit Button */}
-          <button
-            className="btn text-white rounded-pill"
-            onClick={handlePostQuestion}
-            style={{
-              height: "63px",
-              fontSize: "20px",
-              fontWeight: "500",
-              backgroundColor: "#000",
-              width: "606px",
-              marginTop: "25px",
-            }}
-          >
-            Post Your Legal Issues
-          </button>
-        </div>
-      </div>
-      )}
-
-      {/* Backdrop for Post Question */}
-      {showPostQuestion && (
-        <div
-          className="offcanvas-backdrop fade show dashboard-backdrop"
-          onClick={() => setShowPostQuestion(false)}
-        ></div>
-      )}
+      {/* Create Case Modal */}
+      <CreateCaseModal 
+        show={showCreateCase} 
+        onClose={() => setShowCreateCase(false)} 
+        onSuccess={fetchDashboardData}
+      />
 
       {/* Success Animation Modal */}
       {showSuccessAnimation && (
