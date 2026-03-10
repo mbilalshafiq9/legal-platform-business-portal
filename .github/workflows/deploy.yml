@@ -41,6 +41,5 @@ jobs:
         source: "./business/*"
         target: "/var/www/html/"
         port: 22
-
     - name: Remove .env file after deployment
       run: rm -f .env
