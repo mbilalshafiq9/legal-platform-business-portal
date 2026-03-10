@@ -2,7 +2,7 @@
   "name": "legal-platform-portal",
   "version": "0.1.0",
   "private": true,
-  "homepage": "/user_portal",
+  "homepage": "/business",
   "dependencies": {
     "@reduxjs/toolkit": "^2.3.0",
     "@stripe/react-stripe-js": "^5.4.1",
