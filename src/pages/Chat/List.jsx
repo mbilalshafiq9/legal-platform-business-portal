@@ -902,6 +902,31 @@ const List = () => {
                   </div>
                 </div>
 
+                {/* Search Bar */}
+                <div className="p-4 mb-0">
+                  <div className="position-relative">
+                    <input
+                      type="text"
+                      className="form-control form-control-lg rounded-pill my-lawyers-search-input"
+                      placeholder="Search"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      style={{ paddingRight: "45px" }}
+                    />
+                    <i className="bi bi-search position-absolute top-50 translate-middle-y text-muted fs-4 ms-4"></i>
+                    {searchTerm && (
+                      <button
+                        type="button"
+                        className="btn btn-link position-absolute top-50 end-0 translate-middle-y me-2 p-0"
+                        onClick={() => setSearchTerm("")}
+                        style={{ border: "none", background: "none" }}
+                      >
+                        <i className="bi bi-x-circle text-muted"></i>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
                 {/* Sub Tabs (only for Lawyers tab) */}
                 {activeTab === "lawyers" && (
                   <div className="px-4 pb-3">
@@ -930,31 +955,6 @@ const List = () => {
                   </div>
                 )}
 
-                {/* Search Bar */}
-                <div className="p-4 mb-4">
-                  <div className="position-relative">
-                    <input
-                      type="text"
-                      className="form-control form-control-lg rounded-pill my-lawyers-search-input"
-                      placeholder="Search"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      style={{ paddingRight: "45px" }}
-                    />
-                    <i className="bi bi-search position-absolute top-50 translate-middle-y text-muted fs-4 ms-4"></i>
-                    {searchTerm && (
-                      <button
-                        type="button"
-                        className="btn btn-link position-absolute top-50 end-0 translate-middle-y me-2 p-0"
-                        onClick={() => setSearchTerm("")}
-                        style={{ border: "none", background: "none" }}
-                      >
-                        <i className="bi bi-x-circle text-muted"></i>
-                      </button>
-                    )}
-                  </div>
-                </div>
-
                 {/* Contact List */}
                 <div
                   className={`flex-fill overflow-auto d-flex justify-content-start align-items-center flex-column ${
@@ -980,7 +980,8 @@ const List = () => {
                     <div
                       key={item.id || item.chatId}
                       className={`p-3 cursor-pointer mb-3 my-lawyers-contact-card portal-card-hover ${
-                        selectedContact?.chatId === item.chatId || selectedContact?.id === item.id
+                        (selectedContact?.chatId && item.chatId && selectedContact.chatId === item.chatId) || 
+                        (selectedContact?.id === item.id)
                           ? "my-lawyers-contact-card-active"
                           : "bg-white"
                       }`}
@@ -1176,10 +1177,10 @@ const List = () => {
                               </div>
                             </div>
                             <div
-                              className={`p-3 rounded-3 my-lawyers-message-bubble ${
+                              className={`p-3 my-lawyers-message-bubble ${
                                 message.isFromUser
-                                  ? "bg-dark text-white"
-                                  : "bg-white text-dark"
+                                  ? "bg-dark text-white my-lawyers-message-bubble-outgoing"
+                                  : "bg-white text-dark my-lawyers-message-bubble-incoming"
                               }`}
                             >
                               {/* Display file if present */}

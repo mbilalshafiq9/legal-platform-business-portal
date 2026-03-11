@@ -10,7 +10,9 @@ const AskQuestionOffcanvas = ({ show, onClose, jurisdictionOptions = [], onSucce
   const [jurisdiction, setJurisdiction] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [search, setSearch] = useState("");
+  const [attachment, setAttachment] = useState(null);
   const dropdownRef = useRef(null);
+  const fileInputRef = useRef(null);
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
 
   useEffect(() => {
@@ -30,6 +32,7 @@ const AskQuestionOffcanvas = ({ show, onClose, jurisdictionOptions = [], onSucce
       setIsClosing(false);
       setShowDropdown(false);
       setSearch("");
+      setAttachment(null);
     }
   }, [show]);
 
@@ -39,8 +42,23 @@ const AskQuestionOffcanvas = ({ show, onClose, jurisdictionOptions = [], onSucce
       setIsClosing(false);
       setShowDropdown(false);
       setSearch("");
+      setAttachment(null);
       onClose && onClose();
     }, 300);
+  };
+
+  const handleAttachmentChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setAttachment(file);
+    }
+  };
+
+  const removeAttachment = () => {
+    setAttachment(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const handleSubmit = async () => {
@@ -53,16 +71,30 @@ const AskQuestionOffcanvas = ({ show, onClose, jurisdictionOptions = [], onSucce
       return;
     }
     try {
+      let requestData;
+      if (attachment) {
+        requestData = new FormData();
+        requestData.append("question", postQuestionText);
+        requestData.append("jurisdiction_id", jurisdiction);
+        requestData.append("attachment", attachment);
+      } else {
+        requestData = {
+          question: postQuestionText,
+          jurisdiction_id: jurisdiction,
+        };
+      }
+
       const response = await ApiService.request({
         method: "POST",
         url: "addQuestion",
-        data: { question: postQuestionText, jurisdiction_id: jurisdiction },
+        data: requestData,
       });
       const data = response.data;
       if (data.status) {
         setShowSuccessAnimation(true);
         setPostQuestionText("");
         setJurisdiction(null);
+        setAttachment(null);
         setTimeout(() => {
           setShowSuccessAnimation(false);
           handleClose();
@@ -106,143 +138,239 @@ const AskQuestionOffcanvas = ({ show, onClose, jurisdictionOptions = [], onSucce
           </div>
         </div>
 
-        <div className="offcanvas-body p-4" style={{ borderBottomLeftRadius: "15px", borderBottomRightRadius: "15px" }}>
-          <div className="mb-3">
-            <textarea
-              className="form-control"
-              placeholder="Explain Your Question"
-              value={postQuestionText}
-              onChange={(e) => setPostQuestionText(e.target.value)}
-              style={{
-                resize: "none",
-                width: "606px",
-                height: "217px",
-                border: "1px solid #C9C9C9",
-                borderRadius: "8px",
-                position: "relative",
-                zIndex: 1,
-                backgroundColor: "#ffffff",
-              }}
-            ></textarea>
-          </div>
-
-          <div className="mb-3">
-            <div className="position-relative" ref={dropdownRef}>
-              <button
-                type="button"
-                className="form-select d-flex align-items-center justify-content-between"
-                onClick={() => {
-                  setShowDropdown(!showDropdown);
-                  setSearch("");
-                }}
+        <div className="offcanvas-body p-5 d-flex flex-column" style={{ borderBottomLeftRadius: "15px", borderBottomRightRadius: "15px", height: "calc(100% - 70px)" }}>
+          <div className="flex-grow-1">
+            <div className="mb-3">
+              <textarea
+                className="form-control"
+                placeholder="Explain Your Question"
+                value={postQuestionText}
+                onChange={(e) => setPostQuestionText(e.target.value)}
                 style={{
+                  resize: "none",
                   width: "606px",
-                  height: "79px",
+                  height: "217px",
                   border: "1px solid #C9C9C9",
                   borderRadius: "8px",
-                  backgroundColor: "#fff",
-                  cursor: "pointer",
-                  textAlign: "left",
-                  paddingLeft: "12px",
-                  paddingRight: "40px",
+                  position: "relative",
+                  zIndex: 1,
+                  backgroundColor: "#ffffff",
                 }}
-              >
-                <span style={{ color: jurisdiction ? "#000" : "#6c757d" }}>
-                  {jurisdiction ? jurisdictionOptions.find(j => j.value === jurisdiction)?.label || "Jurisdiction" : "Jurisdiction"}
-                </span>
-                {/* <i className={`bi bi-chevron-${showDropdown ? "up" : "down"} position-absolute end-0 translate-middle-y me-3 text-gray-600`} style={{ top: "50%" }}></i> */}
-              </button>
-              
-              {showDropdown && (
-                <div 
-                  className="position-absolute bg-white border rounded shadow-lg"
-                  style={{ 
-                    zIndex: 1050, 
-                    width: "606px", 
-                    maxHeight: "400px",
-                    overflowX: "hidden",
-                    top: "100%",
-                    marginTop: "8px",
-                    bottom: "auto"
+              ></textarea>
+            </div>
+
+            <div className="mb-3">
+              <div className="position-relative" ref={dropdownRef}>
+                <button
+                  type="button"
+                  className="d-flex align-items-center justify-content-between"
+                  onClick={() => {
+                    setShowDropdown(!showDropdown);
+                    setSearch("");
+                  }}
+                  style={{
+                    width: "606px",
+                    height: "79px",
+                    border: "1px solid #C9C9C9",
+                    borderRadius: "8px",
+                    backgroundColor: "#fff",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    paddingLeft: "12px",
+                    paddingRight: "12px",
                   }}
                 >
-                  <div className="p-2 border-bottom bg-white" style={{ position: "sticky", top: 0 }}>
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="Search jurisdiction..."
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                    />
+                  <span style={{ color: jurisdiction ? "#000" : "#6c757d" }}>
+                    {jurisdiction ? jurisdictionOptions.find(j => j.value === jurisdiction)?.label || "Jurisdiction" : "Jurisdiction"}
+                  </span>
+                  <i className={`bi bi-chevron-${showDropdown ? "up" : "down"} fs-5 text-dark`}></i>
+                </button>
+                
+                {showDropdown && (
+                  <div 
+                    className="position-absolute bg-white border rounded shadow-lg"
+                    style={{ 
+                      zIndex: 1050, 
+                      width: "606px", 
+                      maxHeight: "400px",
+                      overflowX: "hidden",
+                      top: "100%",
+                      marginTop: "8px",
+                      bottom: "auto"
+                    }}
+                  >
+                    <div className="p-2 border-bottom bg-white" style={{ position: "sticky", top: 0 }}>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Search jurisdiction..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                      />
+                    </div>
+                    <div style={{ maxHeight: "340px", overflowY: "auto" }}>
+                      {jurisdictionOptions
+                        .filter(j => j.label.toLowerCase().includes(search.toLowerCase()))
+                        .map((j) => (
+                          <button
+                            key={j.value}
+                            type="button"
+                            className="btn btn-light w-100 text-start px-3 py-2 border-0"
+                            onClick={() => {
+                              setJurisdiction(j.value);
+                              setShowDropdown(false);
+                              setSearch("");
+                            }}
+                            style={{ 
+                              fontSize: "0.9rem",
+                              backgroundColor: jurisdiction === j.value ? "#f0f0f0" : "#fff"
+                            }}
+                          >
+                            {j.label}
+                          </button>
+                        ))}
+                      {jurisdictionOptions.filter(j => j.label.toLowerCase().includes(search.toLowerCase())).length === 0 && (
+                        <div className="p-3 text-center text-muted">No results</div>
+                      )}
+                    </div>
                   </div>
-                  <div style={{ maxHeight: "340px", overflowY: "auto" }}>
-                    {jurisdictionOptions
-                      .filter(j => j.label.toLowerCase().includes(search.toLowerCase()))
-                      .map((j) => (
-                        <button
-                          key={j.value}
-                          type="button"
-                          className="btn btn-light w-100 text-start px-3 py-2 border-0"
-                          onClick={() => {
-                            setJurisdiction(j.value);
-                            setShowDropdown(false);
-                            setSearch("");
-                          }}
-                          style={{ 
-                            fontSize: "0.9rem",
-                            backgroundColor: jurisdiction === j.value ? "#f0f0f0" : "#fff"
-                          }}
-                        >
-                          {j.label}
-                        </button>
-                      ))}
-                    {jurisdictionOptions.filter(j => j.label.toLowerCase().includes(search.toLowerCase())).length === 0 && (
-                      <div className="p-3 text-center text-muted">No results</div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div
-            className="mb-3 rounded-4"
-            style={{
-              border: "1px solid #D3D3D3",
-              width: "606px",
-              height: "92px",
-              borderRadius: "8px",
-            }}
-          >
-            <div className="d-flex justify-content-between align-items-center h-100 rounded">
-              <div className="p-3">
-                <h6 className="fw-bold mb-1">Post Question Fee</h6>
-                <small className="text-muted">1 Question post only</small>
+                )}
               </div>
+            </div>
+
+            <div className="mb-4">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleAttachmentChange}
+                style={{ display: "none" }}
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+              />
               <div
-                className="text-end px-5 h-100 d-flex flex-column justify-content-center"
-                style={{ borderLeft: "1px solid #D3D3D3" }}
+                onClick={() => fileInputRef.current.click()}
+                style={{
+                  width: "606px",
+                  height: "64px",
+                  border: "1px dashed #C9C9C9",
+                  borderRadius: "8px",
+                  display: "flex",
+                  alignItems: "center",
+                  cursor: "pointer",
+                  padding: "0 16px",
+                  gap: "12px",
+                }}
               >
-                <div className="fw-bold">USD</div>
-                <div className="fw-bold fs-5">1.00</div>
+                <div
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                    backgroundColor: "#F5F5F5",
+                    borderRadius: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <i className="bi bi-paperclip fs-4 text-muted"></i>
+                </div>
+                <span style={{ color: attachment ? "#000" : "#6c757d", fontSize: "14px" }}>
+                  {attachment ? attachment.name : "Attach Document"}
+                </span>
+                {attachment && (
+                  <button
+                    type="button"
+                    className="btn-close ms-auto"
+                    style={{ fontSize: "10px" }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeAttachment();
+                    }}
+                  ></button>
+                )}
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <h6 className="fw-bold mb-4" style={{ fontSize: "16px", marginTop: "2rem" }}>How it works</h6>
+              <div className="d-flex flex-column gap-5">
+                <div className="d-flex align-items-start gap-3">
+                  <div 
+                    className="mt-1"
+                    style={{ 
+                      width: "14px", 
+                      height: "14px", 
+                      borderRadius: "50%", 
+                      border: "3.5px solid #000",
+                      borderRightColor: "transparent",
+                      transform: "rotate(45deg)",
+                      flexShrink: 0
+                    }} 
+                  />
+                  <span style={{ fontSize: "14px", color: "#374151", fontWeight: "500", lineHeight: "1.5" }}>
+                    Ask your question and see the answer in <br /> Questions & Answers.
+                  </span>
+                </div>
+                <div className="d-flex align-items-start gap-3">
+                  <div 
+                    className="mt-1"
+                    style={{ 
+                      width: "14px", 
+                      height: "14px", 
+                      borderRadius: "50%", 
+                      border: "3.5px solid #000",
+                      borderRightColor: "transparent",
+                      transform: "rotate(45deg)",
+                      flexShrink: 0,
+                    }} 
+                  />
+                  <span style={{ fontSize: "14px", color: "#374151", fontWeight: "500", lineHeight: "1.5" }}>
+                    You will be notified when a lawyer answers.
+                  </span>
+                </div>
               </div>
             </div>
           </div>
 
-          <button
-            className="btn text-white rounded-pill"
-            onClick={handleSubmit}
-            style={{
-              height: "63px",
-              fontSize: "20px",
-              fontWeight: "500",
-              backgroundColor: "#000",
-              width: "606px",
-              marginTop: "25px",
-            }}
-          >
-            Post Your Legal Issues
-          </button>
+          <div className="mt-auto pb-2">
+            <div
+              className="mb-3 rounded-4"
+              style={{
+                border: "1px solid #D3D3D3",
+                width: "606px",
+                height: "75px",
+                borderRadius: "8px",
+              }}
+            >
+              <div className="d-flex justify-content-between align-items-center h-100 rounded">
+                <div className="p-3">
+                  <h6 className="fw-bold mb-1">Post Question Fee</h6>
+                  <small className="text-muted">1 Question post only</small>
+                </div>
+                <div
+                  className="text-end px-5 h-100 d-flex flex-column justify-content-center"
+                  style={{ borderLeft: "1px solid #D3D3D3", minWidth: "120px", alignItems: "center" }}
+                >
+                  <div className="fw-bold">USD</div>
+                  <div className="fw-bold fs-5">1.00</div>
+                </div>
+              </div>
+            </div>
+
+            <button
+              className="btn text-white rounded-pill"
+              onClick={handleSubmit}
+              style={{
+                height: "63px",
+                fontSize: "20px",
+                fontWeight: "500",
+                backgroundColor: "#000",
+                width: "606px",
+                marginTop: "10px",
+              }}
+            >
+              Post Your Legal Issues
+            </button>
+          </div>
         </div>
       </div>
 

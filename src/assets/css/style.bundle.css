@@ -62758,6 +62758,22 @@ body.sidebar-open {
     background-color: #f8f9fa;
 }
 
+.my-lawyers-message-bubble-incoming {
+    max-width: 100%;
+    border-radius: 18px 18px 0px 18px !important;
+    border: 1px solid #EBEBEB;
+}
+.seeAll-button {
+    position: absolute;
+    top: 20px;
+    right: 30px
+}
+
+.my-lawyers-message-bubble-outgoing {
+    max-width: 100%;
+    border-radius: 18px 18px 18px 0px !important;
+}
+
 .my-lawyers-message-bubble {
     max-width: 100%;
 }

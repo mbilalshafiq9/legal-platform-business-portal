@@ -709,7 +709,8 @@ const List = () => {
                     <div
                       key={item.id || item.chatId}
                       className={`p-3 cursor-pointer mb-3 my-lawyers-contact-card ${
-                        selectedContact?.chatId === item.chatId || selectedContact?.id === item.id
+                        (selectedContact?.chatId && item.chatId && selectedContact.chatId === item.chatId) || 
+                        (selectedContact?.id === item.id)
                           ? "my-lawyers-contact-card-active"
                           : "bg-white"
                       }`}
@@ -916,10 +917,10 @@ const List = () => {
                               </div>
                             </div>
                             <div
-                              className={`p-3 rounded-3 my-lawyers-message-bubble ${
+                              className={`p-3 my-lawyers-message-bubble ${
                                 message.isFromUser
-                                  ? "bg-dark text-white"
-                                  : "bg-white text-dark"
+                                  ? "bg-dark text-white my-lawyers-message-bubble-outgoing"
+                                  : "bg-white text-dark my-lawyers-message-bubble-incoming"
                               }`}
                             >
                               {message.text && <p className="mb-2">{message.text}</p>}
