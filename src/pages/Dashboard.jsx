@@ -10,6 +10,7 @@ import createNewCase from "../assets/images/createNewCase.png";
 import successAnimation from "../assets/images/Succes.json";
 import noData from "../assets/images/no-data.png";
 import profileIconAnimation from "../assets/images/profile-icon.json";
+import WalkthroughPopup from './components/WalkthroughPopup';
 
 import { toast } from "react-toastify";
 import ApiService from "../services/ApiService";
@@ -658,6 +659,8 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      <WalkthroughPopup />      
 
       <AskQuestionOffcanvas
         show={showPostQuestion}
