@@ -1,0 +1,42 @@
+/* Post Question List Styles */
+
+@media (max-width: 992px) {
+  .post-question-list-header {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+    padding: 15px !important;
+  }
+
+  .post-question-search-container {
+    width: auto !important;
+    flex-grow: 1 !important;
+    max-width: none !important;
+  }
+
+  .post-question-add-btn-container {
+    width: auto !important;
+    margin-top: 0 !important;
+  }
+
+  .post-question-action-btn {
+    width: auto !important;
+    white-space: nowrap !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    font-size: 0.85rem !important;
+    height: 40px !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* Compact the plus icon for mobile */
+  .post-question-action-btn i {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    margin-right: 4px !important;
+    font-size: 0.9rem !important;
+  }
+}

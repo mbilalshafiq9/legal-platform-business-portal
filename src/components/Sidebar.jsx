@@ -387,83 +387,16 @@ const Sidebar = () => {
             </div>
             )}
 
-            {/* Help & Support - Show as dropdown when expanded, separate items when collapsed */}
+            {/* Help & Support - Simple sidebar Nav-link */}
             {hasPermission('view_help_support') && (
-            <>
-              {isCollapsed ? (
-                <>
-                  <div className="menu-item">
-                    <NavLink to="/help-support" className="menu-link portal-nav-hover">
-                      <span className="menu-icon">
-                        <i class="bi bi-headset"></i>
-                      </span>
-                      <span className="menu-title fs-6">Help & Support</span>
-                    </NavLink>
-                  </div>
-                  {/* <div className="menu-item">
-                    <NavLink to="/track-my-ticket" className="menu-link portal-nav-hover">
-                      <span className="menu-icon">
-                        <i class="bi bi-ticket-perforated"></i>
-                      </span>
-                      <span className="menu-title fs-6">Track My Ticket</span>
-                    </NavLink>
-                  </div> */}
-                </>
-              ) : (
-                <div className="menu-item">
-                  <div
-                    className="menu-link portal-nav-hover"
-                    onClick={() => toggleDropdown("help-support")}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <span className="menu-icon">
-                      <i class="bi bi-headset"></i>
-                    </span>
-                    <span className="menu-title fs-6">Help & Support</span>
-                    <span className="menu-arrow">
-                      <i
-                        className={`bi bi-chevron-${
-                          openDropdown === "help-support" ? "up" : "down"
-                        }`}
-                      ></i>
-                    </span>
-                  </div>
-                  <div
-                    className={`menu-sub menu-sub-accordion ${
-                      openDropdown === "help-support" ? "show" : ""
-                    }`}
-                    style={{
-                      display: openDropdown === "help-support" ? "block" : "none",
-                    }}
-                  >
-                    <div className="menu-item">
-                      <NavLink
-                        to="/help-support"
-                        className="menu-link portal-nav-hover"
-                        onClick={hideSidebar}
-                      >
-                        <span className="menu-bullet">
-                          <span className="bullet bullet-dot"></span>
-                        </span>
-                        <span className="menu-title fs-6">Help & Support</span>
-                      </NavLink>
-                    </div>
-                    {/* <div className="menu-item">
-                      <NavLink
-                        to="/track-my-ticket"
-                        className="menu-link portal-nav-hover"
-                        onClick={hideSidebar}
-                      >
-                        <span className="menu-bullet">
-                          <span className="bullet bullet-dot"></span>
-                        </span>
-                        <span className="menu-title fs-6">Track My Ticket</span>
-                      </NavLink>
-                    </div> */}
-                  </div>
-                </div>
-              )}
-            </>
+            <div className="menu-item">
+              <NavLink to="/help-support" className="menu-link portal-nav-hover" onClick={hideSidebar}>
+                <span className="menu-icon">
+                  <i class="bi bi-headset"></i>
+                </span>
+                <span className="menu-title fs-6">Help & Support</span>
+              </NavLink>
+            </div>
             )}
           </div>
         </div>

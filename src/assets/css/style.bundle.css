@@ -62754,9 +62754,15 @@ body.sidebar-open {
     border-left: none;
 }
 
+/* .p-dropdown .p-dropdown-label.p-placeholder {
+    margin: 14px !important
+} */
+
 .my-lawyers-messages-area {
     background-color: #f8f9fa;
 }
+
+
 
 .my-lawyers-message-bubble-incoming {
     max-width: 100%;
@@ -63047,6 +63053,11 @@ body.sidebar-open {
 
     .post-question-card .card-body {
         padding: 1.25rem !important;
+    }
+
+    /* My Lawyers mobile search spacing */
+    .my-lawyers-search-input {
+        padding-left: 40px !important;
     }
 }
 
@@ -63723,10 +63734,29 @@ body.dark-mode .notification-page-card-hover:hover .text-muted {
          margin-right: 0 !important;
      }
 
-     .container-fluid .row .col-12.px-0 .d-flex.justify-content-center .position-relative input {
-         width: 100% !important;
-         max-width: 100% !important;
-         margin-left: 0 !important;
-         margin-right: 0 !important;
-     }
+    .container-fluid .row .col-12.px-0 .d-flex.justify-content-center .position-relative input {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    /* Dashboard My Lawyers - mobile layout */
+    .dashboard-my-lawyers-card .card-body > .d-flex {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+
+    .dashboard-my-lawyers-card .lawyers-tabs {
+        margin: 12px 0 0 0 !important;
+        width: 100% !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+    }
+
+    .dashboard-my-lawyers-card .lawyers-tabs .btn {
+        flex: 1 1 48% !important;
+        margin-right: 0 !important;
+    }
 }

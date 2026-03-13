@@ -1,0 +1,51 @@
+/* My Cases List Styles */
+
+@media (max-width: 992px) {
+  .my-cases-header-container {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+  }
+
+  .my-cases-search-container {
+    width: auto !important;
+    flex-grow: 1 !important;
+    max-width: none !important;
+  }
+
+  .my-cases-add-button {
+    margin-left: 0 !important;
+    margin-top: 0 !important;
+    width: auto !important;
+    white-space: nowrap !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    font-size: 0.9rem !important;
+  }
+  
+  .my-cases-add-button i {
+     margin-right: 0 !important;
+   }
+
+   .my-cases-plus-icon-container {
+     width: 24px !important;
+     height: 24px !important;
+     min-width: 24px !important;
+     background-color: #fff !important;
+     display: flex !important;
+     align-items: center !important;
+     justify-content: center !important;
+   }
+
+   .my-cases-plus-icon-container i {
+     background-color: transparent !important;
+     padding: 0 !important;
+     font-size: 1.2rem !important;
+     line-height: 1 !important;
+     display: flex !important;
+     align-items: center !important;
+     justify-content: center !important;
+   }
+ }

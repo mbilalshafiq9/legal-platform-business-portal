@@ -366,17 +366,27 @@ const Dashboard = () => {
 
               {/* Recent Posted Question and Lawyer Respond */}
               <div
-                className="card mb-6 shadow recent-posted-question-card recent-question-card-hover dashboard-recent-question-card"
+                className="card mb-6 shadow recent-posted-question-card recent-question-card-hover dashboard-recent-question-card position-relative"
                 data-aos="fade-up"
                 data-aos-delay="500"
               >
                 <div className="card-body p-4">
+                  <NavLink to={"/all-questions"}>
+                    <a
+                      href="#"
+                      className="fw-semibold text-decoration-none text-black seeAll-button d-lg-none"
+                    >
+                      See All
+                    </a>
+                  </NavLink>
                   <div className="row">
                     {/* Recent Posted Question Section */}
-                    <div className="col-lg-7 col-md-12 mb-4 mb-lg-0">
-                      <h1 className="fw-bold text-dark mb-4">
-                        Recent Posted Question
-                      </h1>
+                    <div className="col-lg-7 col-md-12 mb-4 mb-lg-0 border-end">
+                      <div className="d-flex justify-content-between align-items-center mb-4">
+                        <h1 className="fw-bold text-dark mb-0">
+                          Recent Posted Question
+                        </h1>
+                      </div>
                       {recentQuestion ? (
                         <>
                           <p className="text-gray-700 mb-4">
@@ -422,16 +432,18 @@ const Dashboard = () => {
 
                     {/* Lawyer Respond Section */}
                     <div className="col-lg-5 col-md-12">
-                      <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
-                        <h2 className="fw-bold mb-0 mb-md-0 dashboard-lawyer-respond-title">
+                      <div className="d-flex flex-row justify-content-between align-items-center mb-4">
+                        <h2 className="fw-bold mb-0 dashboard-lawyer-respond-title">
                           Lawyer Respond
                         </h2>
-                        <a
-                          href="#"
-                          className="text-black fw-semibold text-decoration-none text-md-end"
-                        >
-                          See All
-                        </a>
+                        <NavLink to={"/all-questions"} className="d-none d-lg-block">
+                          <a
+                            href="#"
+                            className="text-black fw-semibold text-decoration-none"
+                          >
+                            See All
+                          </a>
+                        </NavLink>
                       </div>
 
                       {lawyerResponses.length > 0 ? (

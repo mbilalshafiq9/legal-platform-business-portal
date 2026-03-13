@@ -122,14 +122,16 @@ const AskQuestionOffcanvas = ({ show, onClose, jurisdictionOptions = [], onSucce
           right: 0,
           bottom: 0,
           visibility: "visible",
-          width: "633px",
+          width: window.innerWidth < 768 ? "calc(100% - 20px)" : "100%",
+          maxWidth: "633px",
           transition: "all 0.3s ease-out",
           borderRadius: "13px",
-          margin: "20px",
+          margin: window.innerWidth < 768 ? "10px" : "20px",
           zIndex: 1045,
           transform: isClosing ? "translateX(100%)" : "translateX(0)",
           animation: isClosing ? "slideOutToRight 0.3s ease-in" : "slideInFromRight 0.3s ease-out",
           backgroundColor: "#fff",
+          height: window.innerWidth < 768 ? "calc(100% - 20px)" : "calc(100% - 40px)",
         }}
       >
         <div className="offcanvas-header border-bottom" style={{ borderTopLeftRadius: "15px", borderTopRightRadius: "15px" }}>
@@ -139,7 +141,7 @@ const AskQuestionOffcanvas = ({ show, onClose, jurisdictionOptions = [], onSucce
           </div>
         </div>
 
-        <div className="offcanvas-body p-5 d-flex flex-column" style={{ borderBottomLeftRadius: "15px", borderBottomRightRadius: "15px", height: "calc(100% - 70px)" }}>
+        <div className="offcanvas-body p-3 p-md-5 d-flex flex-column" style={{ borderBottomLeftRadius: "15px", borderBottomRightRadius: "15px", height: "calc(100% - 70px)" }}>
           <div className="flex-grow-1">
             <div className="mb-3">
               <textarea
@@ -149,7 +151,7 @@ const AskQuestionOffcanvas = ({ show, onClose, jurisdictionOptions = [], onSucce
                 onChange={(e) => setPostQuestionText(e.target.value)}
                 style={{
                   resize: "none",
-                  width: "606px",
+                  width: "100%",
                   height: "217px",
                   border: "1px solid #C9C9C9",
                   borderRadius: "8px",
@@ -170,7 +172,7 @@ const AskQuestionOffcanvas = ({ show, onClose, jurisdictionOptions = [], onSucce
                     setSearch("");
                   }}
                   style={{
-                    width: "606px",
+                    width: "100%",
                     height: "70px",
                     border: "1px solid #C9C9C9",
                     borderRadius: "8px",
@@ -192,7 +194,7 @@ const AskQuestionOffcanvas = ({ show, onClose, jurisdictionOptions = [], onSucce
                     className="position-absolute bg-white border rounded shadow-lg"
                     style={{ 
                       zIndex: 1050, 
-                      width: "606px", 
+                      width: "100%", 
                       maxHeight: "400px",
                       overflowX: "hidden",
                       top: "100%",
@@ -250,7 +252,7 @@ const AskQuestionOffcanvas = ({ show, onClose, jurisdictionOptions = [], onSucce
               <div
                 onClick={() => fileInputRef.current.click()}
                 style={{
-                  width: "606px",
+                  width: "100%",
                   height: "64px",
                   border: "1px dashed #C9C9C9",
                   borderRadius: "8px",
@@ -338,7 +340,7 @@ const AskQuestionOffcanvas = ({ show, onClose, jurisdictionOptions = [], onSucce
               className="mb-3 rounded-4"
               style={{
                 border: "1px solid #D3D3D3",
-                width: "606px",
+                width: "100%",
                 height: "75px",
                 borderRadius: "8px",
               }}
@@ -366,7 +368,7 @@ const AskQuestionOffcanvas = ({ show, onClose, jurisdictionOptions = [], onSucce
                 fontSize: "20px",
                 fontWeight: "500",
                 backgroundColor: "#000",
-                width: "606px",
+                width: "100%",
                 marginTop: "10px",
               }}
             >

@@ -4,6 +4,7 @@ import notificationProfile from "../../assets/images/notification-profile.png";
 import { toast } from "react-toastify";
 import ApiService from "../../services/ApiService";
 import CreateCaseModal from "../../components/CreateCaseModal";
+import "./MyCasesList.css";
 
 const List = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -88,9 +89,9 @@ const List = () => {
               marginTop: "30px",
             }} data-aos="fade-up">
         <div className="col-12 px-0">
-          <div className="d-lg-flex gap-3 align-items-center">
+          <div className="d-lg-flex gap-3 align-items-center my-cases-header-container">
             {/* Search Bar */}
-            <div className="position-relative flex-grow-1" style={{ maxWidth: "400px" }}>
+            <div className="position-relative flex-grow-1 my-cases-search-container" style={{ maxWidth: "400px" }}>
               <input
                 type="text"
                 className="form-control form-control-lg rounded-pill portal-form-hover"
@@ -120,7 +121,7 @@ const List = () => {
               onClick={() => setShowCreateCase(true)}
             >
               <div
-                className="rounded-circle d-flex align-items-center justify-content-center"
+                className="rounded-circle d-flex align-items-center justify-content-center my-cases-plus-icon-container"
                 style={{
                   backgroundColor: "#f8f9fa",
                 }}
