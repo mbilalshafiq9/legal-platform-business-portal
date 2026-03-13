@@ -289,33 +289,34 @@ const CreateCaseModal = ({ show, onClose, onSuccess }) => {
   return (
     <>
       <div
-        className="modal fade show"
-        style={{
-          display: "block",
-          backgroundColor: "rgba(0,0,0,0.5)",
-          opacity: isClosing ? 0 : 1,
-          transition: "opacity 0.3s ease-in-out"
-        }}
+        className="offcanvas offcanvas-end show"
         tabIndex="-1"
-        onClick={handleClose}
+        style={{
+          position: "fixed",
+          top: 0,
+          right: 0,
+          bottom: 0,
+          visibility: "visible",
+          width: "650px",
+          height: "80%",
+          transition: "all 0.3s ease-out",
+          borderRadius: "13px",
+          margin: "auto 20px",
+          zIndex: 1045,
+          transform: isClosing ? "translateX(100%)" : "translateX(0)",
+          animation: isClosing ? "slideOutToRight 0.3s ease-in" : "slideInFromRight 0.3s ease-out",
+          backgroundColor: "#fff",
+        }}
       >
-        <div 
-          className="modal-dialog modal-dialog-centered modal-lg" 
-          style={{ maxWidth: "800px" }}
-          onClick={e => e.stopPropagation()}
-        >
-          <div className="modal-content" style={{ borderRadius: "20px", border: "none", padding: "20px" }}>
-            <div className="modal-header border-0 pb-0">
-              <h5 className="modal-title fw-bold fs-4">Create a Case</h5>
-              <button
-                type="button"
-                className="btn-close"
-                onClick={handleClose}
-                aria-label="Close"
-              ></button>
-            </div>
-            
-            <div className="modal-body">
+        <div className="offcanvas-header border-bottom" style={{ borderTopLeftRadius: "15px", borderTopRightRadius: "15px" }}>
+          <div className="d-flex justify-content-between align-items-center w-100">
+            <h5 className="mb-0 fw-bold fs-4" style={{ color: "#2B2B2B" }}>Create a Case</h5>
+            <button type="button" className="btn-close" onClick={handleClose}></button>
+          </div>
+        </div>
+        
+        <div className="offcanvas-body p-4 d-flex flex-column" style={{ borderBottomLeftRadius: "15px", borderBottomRightRadius: "15px", height: "calc(100% - 70px)" }}>
+              <div className="flex-grow-1" style={{ overflowY: "auto" }}>
               <form onSubmit={handleSubmit}>
                 {/* Row 1: Jurisdiction & Consultant Type */}
                 <div className="row g-3 mb-3">
@@ -332,7 +333,7 @@ const CreateCaseModal = ({ show, onClose, onSuccess }) => {
                         }}
                         disabled={loadingDropdowns}
                         style={{
-                          height: "60px",
+                          height: "70px",
                           borderRadius: "12px",
                           border: "1px solid #E0E0E0",
                           fontSize: "16px",
@@ -638,13 +639,14 @@ const CreateCaseModal = ({ show, onClose, onSuccess }) => {
                           width: "40px",
                           height: "40px",
                           backgroundColor: "#f8f9fa",
-                          borderRadius: "8px"
+                          borderRadius: "8px",
+                          border: "1px dashed #bebebe"
                         }}
                       >
                         <i className="bi bi-paperclip fs-5 text-dark"></i>
                       </div>
                       <div>
-                        <span className="text-dark fw-medium">Attach Document</span>
+                        <span className="fw-medium" style={{ color: "#525252" }}>Attach Document</span>
                         {formData.attachments.length > 0 && (
                           <div className="text-muted small mt-1">
                             {formData.attachments.length} file(s) selected
@@ -664,9 +666,9 @@ const CreateCaseModal = ({ show, onClose, onSuccess }) => {
                       id="acceptTerms"
                       checked={formData.acceptTerms}
                       onChange={(e) => handleChange("acceptTerms", e.target.checked)}
-                      style={{ cursor: "pointer" }}
+                      style={{ cursor: "pointer", border: "1px solid black" }}
                     />
-                    <label className="form-check-label text-muted small ms-2" htmlFor="acceptTerms" style={{ cursor: "pointer" }}>
+                    <label className="form-check-label small ms-2" htmlFor="acceptTerms" style={{ cursor: "pointer", color: "#767676" }}>
                       Accept all Privacy policy & Terms & conditions
                     </label>
                   </div>
@@ -696,11 +698,11 @@ const CreateCaseModal = ({ show, onClose, onSuccess }) => {
                 <button type="submit" className="d-none"></button>
               </form>
             </div>
-
-            <div className="modal-footer border-0 pt-0 justify-content-center pb-4">
+            
+            <div className="mt-auto pt-3">
               <button
                 type="button"
-                className={`btn w-100 py-3 rounded-pill fw-bold fs-5 ${lawyerCount === 0 ? 'btn-secondary' : 'btn-dark'}`}
+                className={`btn w-100 py-3 rounded-pill text-white fw-bold fs-5 ${lawyerCount === 0 ? 'text-white' : 'bg-black'}`}
                 onClick={handleSubmit}
                 disabled={loadingDropdowns || checkingLawyers || lawyerCount === 0}
               >
@@ -716,9 +718,13 @@ const CreateCaseModal = ({ show, onClose, onSuccess }) => {
                 )}
               </button>
             </div>
-          </div>
-        </div>
+            </div>
       </div>
+      
+      <div
+        className="offcanvas-backdrop fade show"
+        onClick={handleClose}
+      ></div>
     </>
   );
 };

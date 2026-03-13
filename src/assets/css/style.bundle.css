@@ -63382,11 +63382,35 @@ html {
     transform: none !important;
 }
 
+.employees-filter-button {
+    transition: all 0.3s ease;
+}
+
+.employees-filter-button:hover {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    border-color: #000000 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
 .employees-filter-button:hover i {
-    color: #000 !important;
+    color: #ffffff !important;
 }
 
 .employees-add-button:hover i {
+    color: #ffffff !important;
+}
+
+button.employees-add-button-hover-fix:hover {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    border-color: #000000 !important;
+}
+
+button.employees-add-button-hover-fix:hover i {
     color: #ffffff !important;
 }
 

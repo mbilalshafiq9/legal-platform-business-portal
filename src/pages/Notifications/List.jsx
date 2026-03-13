@@ -244,7 +244,7 @@ const List = () => {
                               style={{
                                 width: "12px",
                                 height: "12px",
-                                backgroundColor: "#000",
+                                backgroundColor: "#E44A33",
                                 borderRadius: "50%",
                                 border: "2px solid white",
                               }}
@@ -255,14 +255,14 @@ const List = () => {
                         {/* Content */}
                         <div className="flex-fill">
                           <div className="d-flex justify-content-between align-items-start mb-2">
-                            <h6 className={`fw-bold mb-0 ${notification.isUnread ? 'text-dark' : 'text-muted'}`}>
+                            <h6 className={`fw-bold mb-0 ${notification.isUnread ? 'text-dark' : 'text-black'}`}>
                               {notification.name}
                             </h6>
-                            <span className="text-muted fs-7">
+                            <span className="fs-7" style={{ color: "#8C8C8C" }}>
                               {notification.time}
                             </span>
                           </div>
-                          <p className="text-muted mb-0" style={{ lineHeight: "1.5" }}>
+                          <p className="mb-0" style={{ lineHeight: "1.5", color: "#646464" }}>
                             {notification.message}
                           </p>
                         </div>

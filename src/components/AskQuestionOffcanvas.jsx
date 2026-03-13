@@ -3,6 +3,7 @@ import { toast } from "react-toastify";
 import Lottie from "lottie-react";
 import ApiService from "../services/ApiService";
 import successAnimation from "../assets/images/Succes.json";
+import { color } from "framer-motion";
 
 const AskQuestionOffcanvas = ({ show, onClose, jurisdictionOptions = [], onSuccess }) => {
   const [isClosing, setIsClosing] = useState(false);
@@ -170,7 +171,7 @@ const AskQuestionOffcanvas = ({ show, onClose, jurisdictionOptions = [], onSucce
                   }}
                   style={{
                     width: "606px",
-                    height: "79px",
+                    height: "70px",
                     border: "1px solid #C9C9C9",
                     borderRadius: "8px",
                     backgroundColor: "#fff",
@@ -269,6 +270,7 @@ const AskQuestionOffcanvas = ({ show, onClose, jurisdictionOptions = [], onSucce
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
+                    border: "1px dashed #BEBEBE"
                   }}
                 >
                   <i className="bi bi-paperclip fs-4 text-muted"></i>
@@ -344,14 +346,14 @@ const AskQuestionOffcanvas = ({ show, onClose, jurisdictionOptions = [], onSucce
               <div className="d-flex justify-content-between align-items-center h-100 rounded">
                 <div className="p-3">
                   <h6 className="fw-bold mb-1">Post Question Fee</h6>
-                  <small className="text-muted">1 Question post only</small>
+                  <small className="" style={{ color: "#474747" }}>1 Question post only</small>
                 </div>
                 <div
                   className="text-end px-5 h-100 d-flex flex-column justify-content-center"
                   style={{ borderLeft: "1px solid #D3D3D3", minWidth: "120px", alignItems: "center" }}
                 >
-                  <div className="fw-bold">USD</div>
-                  <div className="fw-bold fs-5">1.00</div>
+                  <div className="fw-light fs-3">USD</div>
+                  <div className="fw-bold fs-1">1.00</div>
                 </div>
               </div>
             </div>

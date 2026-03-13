@@ -605,7 +605,7 @@ const List = () => {
                 }}
               />
               <i
-                className="bi bi-search position-absolute top-50 translate-middle-y text-muted fs-5"
+                className="bi bi-search position-absolute top-50 translate-middle-y text-black fs-5"
                 style={{ left: "20px" }}
               ></i>
             </div>
@@ -788,10 +788,11 @@ const List = () => {
                     </h5>
                     <div className="d-flex align-items-center justify-content-start mb-3">
                       <div className="d-flex align-items-center me-5">
-                        <i className="bi bi-star-fill text-dark me-1" style={{ fontSize: "0.9rem" }}></i>
-                        <span className="fw-bold text-dark lawyers-rating-hover" style={{ fontSize: "0.9rem" }}>
+                        <span className="fw-bold text-dark lawyers-rating-hover me-2" style={{ fontSize: "0.9rem" }}>
                           {lawyer.rating}
                         </span>
+                        <i className="bi bi-star-fill me-1" style={{ fontSize: "0.9rem", color: "#FFB600" }}></i>
+                        
                       </div>
                       <div className="d-flex align-items-center">
                         <i className="bi bi-geo-alt-fill text-muted me-1" style={{ fontSize: "0.8rem" }}></i>
