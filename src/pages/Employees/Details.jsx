@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import circle from "../../assets/images/yellow-circle.png";
 import employeeDetail from "../../assets/images/employeeDetail.png";
+import licenseImg from "../../assets/images/lisence-img.png";
 import "./detail.css";
 
 const EmployeeDetails = () => {
@@ -41,7 +42,10 @@ const EmployeeDetails = () => {
     return {
       id: parseInt(id),
       name: "Noon",
-      location: "Retail Riyadh, 5K–10K Employees",
+      location: "Online Shopping Internationaly",
+      email: "noon@shopping.com",
+      phone: "+971 24 836 9057",
+      website: "noon.com",
       description:
         "Noon is a Saudi Arabian-headquartered, tech-driven e-commerce platform founded in 2016 by Mohamed Alabbar to cater to the Middle East's digital economy by offering a local alternative to international Read More...",
       bannerImage: employeeDetail,
@@ -65,6 +69,9 @@ const EmployeeDetails = () => {
   const [editFormData, setEditFormData] = useState({
     name: employee.name,
     location: employee.location,
+    email: employee.email,
+    phone: employee.phone,
+    website: employee.website,
     description: employee.description,
     bannerImage: employee.bannerImage,
     profileImage: employee.profileImage,
@@ -86,12 +93,23 @@ const EmployeeDetails = () => {
     setEditFormData({
       name: employee.name,
       location: employee.location,
+      email: employee.email,
+      phone: employee.phone,
+      website: employee.website,
       description: employee.description,
       bannerImage: employee.bannerImage,
       profileImage: employee.profileImage,
       socialMedia: { ...employee.socialMedia },
     });
   }, [employee]);
+
+  // Set body background to white for this page
+  useEffect(() => {
+    document.body.classList.add('bg-white-page');
+    return () => {
+      document.body.classList.remove('bg-white-page');
+    };
+  }, []);
 
   const handleEditInputChange = (field, value) => {
     if (field.startsWith("socialMedia.")) {
@@ -132,14 +150,19 @@ const EmployeeDetails = () => {
   };
 
   return (
-    <div className="employee-container" style={{ marginTop: "31px" }}>
+    <div className="employee-container">
       {/* Banner Section */}
       <div className="banner-wrapper">
-        <img src={employee.bannerImage} alt="Banner" className="banner-image" style={{ height: "259px" }} />
+        {/* <img src={employee.bannerImage} alt="Banner" className="banner-image" style={{ height: "259px" }} /> */}
       </div>
 
       {/* Profile Card */}
-      <div className="profile-card" style={{ width: "621px", height: "681px" }}>
+      <div 
+        className="profile-card dashboard-card-hover" 
+        style={{ width: "621px" }}
+        data-aos="fade-up"
+        data-aos-duration="1000"
+      >
         <div className="profile-header">
           <div className="profile-image-wrapper">
             <img
@@ -150,7 +173,7 @@ const EmployeeDetails = () => {
           </div>
           <div className="profile-info">
             <h2 className="company-name">{employee.name}</h2>
-            <p className="company-location">{employee.location}</p>
+            {/* <p className="company-location">{employee.location}</p> */}
           </div>
           <div className="edit-button-wrapper">
             <button
@@ -162,10 +185,34 @@ const EmployeeDetails = () => {
           </div>
         </div>
 
-        <p className="company-description">{employee.description}</p>
+        {/* <p className="company-description">{employee.description}</p> */}
         
-        {/* Textarea in empty space */}
-        <div className="company-textarea-section">
+        {/* Contact Info Grid */}
+        <div className="contact-info-grid mt-4">
+          <div className="contact-info-item">
+            <h6 className="contact-label">Email</h6>
+            <p className="contact-value">{employee.email}</p>
+          </div>
+          <div className="contact-info-item">
+            <h6 className="contact-label">Phone</h6>
+            <div className="d-flex align-items-center gap-2">
+              <img src="https://flagcdn.com/w20/ae.png" alt="UAE Flag" width="20" height="15" />
+              <p className="contact-value mb-0">{employee.phone}</p>
+            </div>
+          </div>
+          <div className="contact-info-item">
+            <h6 className="contact-label">Website</h6>
+            <p className="contact-value">{employee.website}</p>
+          </div>
+          <div className="contact-info-item">
+            <h6 className="contact-label">Company Trade License</h6>
+            <div className="license-image-container">
+              <img src={licenseImg} alt="Trade License" className="license-image" />
+            </div>
+          </div>
+        </div>
+        
+        {/* <div className="company-textarea-section">
           <textarea
             className="company-textarea"
             value={additionalInfo}
@@ -174,7 +221,7 @@ const EmployeeDetails = () => {
             style={{ height: "246px" }}
           ></textarea>
         </div>
-        {/* Social Media Links */}
+        {/* Social Media Links
       <div className="social-section" style={{ marginTop: "50px", width: "37%" }}>
         <h6 className="text-center">CONNECT WITH US</h6>
         <div className="social-icons">
@@ -191,7 +238,7 @@ const EmployeeDetails = () => {
             <i className="bi bi-linkedin text-black"></i>
           </a>
         </div>
-      </div>
+      </div> */}
       </div>
 
       {/* Edit Profile Offcanvas */}
@@ -214,11 +261,29 @@ const EmployeeDetails = () => {
                   value={editFormData.name}
                   onChange={(e) => handleEditInputChange("name", e.target.value)}
                 />
-                <label>Location & Size</label>
+                <label>Location & Tagline</label>
                 <input
                   type="text"
                   value={editFormData.location}
                   onChange={(e) => handleEditInputChange("location", e.target.value)}
+                />
+                <label>Email</label>
+                <input
+                  type="email"
+                  value={editFormData.email}
+                  onChange={(e) => handleEditInputChange("email", e.target.value)}
+                />
+                <label>Phone</label>
+                <input
+                  type="text"
+                  value={editFormData.phone}
+                  onChange={(e) => handleEditInputChange("phone", e.target.value)}
+                />
+                <label>Website</label>
+                <input
+                  type="text"
+                  value={editFormData.website}
+                  onChange={(e) => handleEditInputChange("website", e.target.value)}
                 />
                 <label>Description</label>
                 <textarea

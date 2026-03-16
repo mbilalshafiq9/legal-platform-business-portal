@@ -4,6 +4,7 @@ import notificationProfile from "../../assets/images/notification-profile.png";
 import { toast } from "react-toastify";
 import ApiService from "../../services/ApiService";
 import CreateCaseModal from "../../components/CreateCaseModal";
+import NoCaseImg from "../../assets/images/my-case-img.png";
 import "./MyCasesList.css";
 
 const List = () => {
@@ -145,6 +146,9 @@ const List = () => {
         ) : cases.length === 0 ? (
           <div className="col-12 d-flex justify-content-center align-items-center" style={{ minHeight: "400px" }}>
             <div className="text-center">
+              <div className="mb-4">
+                <img src={NoCaseImg} alt="No Case" style={{ maxWidth: "200px", height: "auto" }} />
+              </div>
               <h4 className="text-muted mb-2">No Cases Found</h4>
               <p className="text-muted">You don't have any cases yet.</p>
             </div>

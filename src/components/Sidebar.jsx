@@ -356,9 +356,9 @@ const Sidebar = () => {
 
             {hasPermission('view_my_cases') && (
             <div className="menu-item">
-              <NavLink to="/my-cases" className="menu-link portal-nav-hover">
+              <NavLink end to="/my-cases" className="menu-link portal-nav-hover">
                 <span className="menu-icon">
-                  <i class="bi bi-briefcase-fill"></i>
+                  <i className="bi bi-briefcase-fill"></i>
                 </span>
                 <span className="menu-title fs-6">My Cases</span>
               </NavLink>
@@ -367,11 +367,22 @@ const Sidebar = () => {
 
             {hasPermission('manage_team') && (
             <div className="menu-item">
-              <NavLink to="/employees" className="menu-link portal-nav-hover">
+              <NavLink end to="/employees" className="menu-link portal-nav-hover">
                 <span className="menu-icon">
-                  <i class="bi bi-person-lines-fill"></i>
+                  <i className="bi bi-person-lines-fill"></i>
                 </span>
                 <span className="menu-title fs-6">Teams</span>
+              </NavLink>
+            </div>
+            )}
+
+            {hasPermission('view_employee_details') && (
+            <div className="menu-item">
+              <NavLink to="/employees/1" className="menu-link portal-nav-hover">
+                <span className="menu-icon">
+                  <i className="bi bi-person-circle fs-5"></i>
+                </span>
+                <span className="menu-title fs-6">Account</span>
               </NavLink>
             </div>
             )}
@@ -380,7 +391,7 @@ const Sidebar = () => {
             <div className="menu-item">
               <NavLink to="/account" className="menu-link portal-nav-hover">
                 <span className="menu-icon">
-                  <i class="bi bi-file-earmark-text"></i>
+                  <i className="bi bi-file-earmark-text"></i>
                 </span>
                 <span className="menu-title fs-6">Account Settings</span>
               </NavLink>

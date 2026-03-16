@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 import { toast } from "react-toastify";
 import ApiService from "../../services/ApiService";
 import notificationProfile from "../../assets/images/notification-profile.png";
-import NoQuestion from "../../assets/images/NoQuestion.png";
+import NoQuestion from "../../assets/images/postegalIssue-img.png";
 import PaymentModal from "../../components/PaymentModal";
 import AskQuestionOffcanvas from "../../components/AskQuestionOffcanvas";
 import "../../assets/css/siri-border-animation.css";
