@@ -1,19 +1,24 @@
+/* Force parent containers to be white for this page ONLY in light mode */
+body.bg-white-page:not(.dark-mode),
+body.bg-white-page:not(.dark-mode) #kt_app_root,
+body.bg-white-page:not(.dark-mode) #kt_app_page,
+body.bg-white-page:not(.dark-mode) #kt_app_wrapper,
+body.bg-white-page:not(.dark-mode) .app-page,
+body.bg-white-page:not(.dark-mode) .app-wrapper,
+body.bg-white-page:not(.dark-mode) .app-header,
+body.bg-white-page:not(.dark-mode) #kt_app_header {
+  background-color: #fff !important;
+}
+
+/* Ensure employee container itself respects dark mode */
 .employee-container {
   font-family: "Mukta", sans-serif;
-  background-color: #fff !important;
   min-height: 100vh;
   width: 100%;
   padding-top: 150px;
 }
 
-body.bg-white-page,
-body.bg-white-page #kt_app_root,
-body.bg-white-page #kt_app_page,
-body.bg-white-page #kt_app_wrapper,
-body.bg-white-page .app-page,
-body.bg-white-page .app-wrapper,
-body.bg-white-page .app-header,
-body.bg-white-page #kt_app_header {
+body.bg-white-page:not(.dark-mode) .employee-container {
   background-color: #fff !important;
 }
 
@@ -53,8 +58,29 @@ body.bg-white-page #kt_app_header {
 .profile-card:hover .company-name,
 .profile-card:hover .contact-label,
 .profile-card:hover .contact-value,
-.profile-card:hover .company-location {
+.profile-card:hover .company-location,
+body.dark-mode .profile-card:hover .company-name,
+body.dark-mode .profile-card:hover .contact-label,
+body.dark-mode .profile-card:hover .contact-value,
+body.dark-mode .profile-card:hover .company-location {
   color: #fff !important;
+}
+
+body.dark-mode .profile-card {
+  background-color: #1e1e1e;
+  border-color: #333;
+}
+
+body.dark-mode .profile-card .company-name {
+  color: #fff;
+}
+
+body.dark-mode .profile-card .contact-label {
+  color: #eee;
+}
+
+body.dark-mode .profile-card .contact-value {
+  color: #bbb;
 }
 
 .profile-card:hover .edit-btn {
@@ -77,13 +103,36 @@ body.bg-white-page #kt_app_header {
   width: 95px;
   height: 95px;
   border-radius: 50%;
-  background-color: #feee03;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   box-shadow: 0 4px 15px rgba(254, 238, 3, 0.2);
   transition: transform 0.3s ease;
+  position: relative;
+  cursor: pointer;
+}
+
+.edit-image-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 50%;
+  z-index: 2;
+}
+
+.profile-image-wrapper:hover .edit-image-icon {
+  opacity: 1;
 }
 
 .profile-card:hover .profile-image-wrapper {
@@ -91,9 +140,21 @@ body.bg-white-page #kt_app_header {
 }
 
 .profile-image {
+  width: 100%;
+  height: 100%;
+}
+
+.profile-image.noon-logo {
   width: 65%;
   height: 65%;
   object-fit: contain;
+}
+
+.profile-image.user-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 .profile-info {
@@ -136,12 +197,24 @@ body.bg-white-page #kt_app_header {
   align-items: center;
   gap: 10px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  margin-left: 10px;
 }
 
 .edit-btn:hover {
   background-color: #333;
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.otp-btn {
+  background-color: #000 !important;
+  color: #fff !important;
+  border: none !important;
+}
+
+.profile-card:hover .otp-btn {
+  background-color: #fff !important;
+  color: #000 !important;
 }
 
 .company-description {
@@ -185,7 +258,7 @@ body.bg-white-page #kt_app_header {
   left: 0;
   width: 0;
   height: 2px;
-  background-color: #feee03;
+  background-color: #fff;
   transition: width 0.3s ease;
 }
 

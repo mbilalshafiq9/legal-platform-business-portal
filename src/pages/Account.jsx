@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
 import ApiService from "../services/ApiService";
 import Loader from "../components/Loader"; 
+import circle from "../assets/images/yellow-circle.png";
+import licenseImg from "../assets/images/lisence-img.png";
+import "./Employees/detail.css";
 
 const Account = () => {
   const user = (() => {
@@ -32,18 +35,35 @@ const Account = () => {
     return defaultValue;
   };
 
+  const toBase64 = file => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = error => reject(error);
+  });
+
   const [tab, setTab] = useState(loadFromLocalStorage("account_tab", "profile"));
   const [name, setName] = useState(loadFromLocalStorage("account_name", user?.name || ""));
   const [pictureFile, setPictureFile] = useState(null);
   const [picturePreview, setPicturePreview] = useState(user?.picture || "");
   const [email, setEmail] = useState(loadFromLocalStorage("account_email", user?.email || ""));
-  const [newEmail, setNewEmail] = useState(loadFromLocalStorage("account_newEmail", ""));
   const [otp, setOtp] = useState(loadFromLocalStorage("account_emailOtp", ""));
   const [oldPassword, setOldPassword] = useState(loadFromLocalStorage("account_oldPassword", ""));
   const [newPassword, setNewPassword] = useState(loadFromLocalStorage("account_newPassword", ""));
   const [confirmPassword, setConfirmPassword] = useState(loadFromLocalStorage("account_confirmPassword", ""));
+  const [tradeLicenseFile, setTradeLicenseFile] = useState(null);
   const [is2FAEnabled, setIs2FAEnabled] = useState(user?.is_2fa_enabled === 1 || user?.is_2fa_enabled === true);
   const [isLoader, setIsLoader] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [profileData, setProfileData] = useState({
+    name: user?.name || "",
+    email: user?.email || "",
+    phone: user?.phone || "",
+    website: user?.business_info?.website || "",
+  });
+  const [isOtpSent, setIsOtpSent] = useState(false);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const fileInputRef = useRef(null);
 
   // Keep form fields in sync if logged user changes elsewhere
   useEffect(() => {
@@ -65,7 +85,6 @@ const Account = () => {
       localStorage.setItem("account_tab", JSON.stringify(tab));
       localStorage.setItem("account_name", JSON.stringify(name));
       localStorage.setItem("account_email", JSON.stringify(email));
-      localStorage.setItem("account_newEmail", JSON.stringify(newEmail));
       localStorage.setItem("account_emailOtp", JSON.stringify(otp));
       localStorage.setItem("account_oldPassword", JSON.stringify(oldPassword));
       localStorage.setItem("account_newPassword", JSON.stringify(newPassword));
@@ -73,7 +92,7 @@ const Account = () => {
     } catch (error) {
       console.error("Error saving account data to localStorage:", error);
     }
-  }, [tab, name, email, newEmail, otp, oldPassword, newPassword, confirmPassword]);
+  }, [tab, name, email, otp, oldPassword, newPassword, confirmPassword]);
 
 
 const handleSubmit = async (e) => {
@@ -117,11 +136,22 @@ const handleSubmit = async (e) => {
 };
 
 const handleProfileUpdate = async () => {
+  if (profileData.email !== user?.email && !isEmailVerified) {
+    toast.error("Please verify your new email first");
+    return;
+  }
   try {
     const fd = new FormData();
-    fd.append("name", name);
+    fd.append("name", profileData.name || user?.name);
+    fd.append("email", profileData.email || user?.email);
+    fd.append("phone", profileData.phone || user?.phone);
+    fd.append("website", profileData.website || user?.website);
+
     if (pictureFile) {
       fd.append("picture", pictureFile);
+    }
+    if (tradeLicenseFile) {
+      fd.append("trade_license", tradeLicenseFile);
     }
     const response = await ApiService.request({
       method: "POST",
@@ -131,9 +161,28 @@ const handleProfileUpdate = async () => {
     });
     const data = response.data;
     if (data.status) {
-      const updated = { ...(user || {}), name, picture: data.data?.picture || picturePreview };
+      let tradeLicenseData = user?.business_info?.trade_license;
+      if (tradeLicenseFile) {
+        tradeLicenseData = await toBase64(tradeLicenseFile);
+      }
+
+      const updated = { 
+        ...(user || {}), 
+        name: profileData.name || user?.name,
+        email: profileData.email || user?.email,
+        phone: profileData.phone || user?.phone,
+        website: profileData.website || user?.website,
+        picture: picturePreview,
+        business_info: {
+          ...(user?.business_info || {}),
+          trade_license: tradeLicenseData
+        }
+      };
       localStorage.setItem('loggedUser', JSON.stringify(updated));
       setPicturePreview(updated.picture || "");
+      setIsEmailVerified(false);
+      setIsOtpSent(false);
+      setOtp("");
       toast.success(data.message || "Profile updated");
     } else {
       toast.error(data.message || "Failed to update profile");
@@ -143,20 +192,21 @@ const handleProfileUpdate = async () => {
   }
 };
 
-const handleSendEmailOtp = async () => {
-  if (!newEmail) {
-    toast.error("Please enter new email");
+const handleSendEmailOtp = async (targetEmail) => {
+  if (!targetEmail) {
+    toast.error("Please enter email");
     return;
   }
   try {
     const response = await ApiService.request({
       method: "POST",
       url: "resendOTP",
-      data: { email: newEmail, update_profile: true, userId: user?.id }
+      data: { email: targetEmail, update_profile: true, userId: user?.id }
     });
     const data = response.data;
     if (data.status) {
-      toast.success("OTP sent to new email");
+      toast.success("OTP sent to email");
+      setIsOtpSent(true);
     } else {
       toast.error(data.message || "Failed to send OTP");
     }
@@ -165,9 +215,9 @@ const handleSendEmailOtp = async () => {
   }
 };
 
-const handleVerifyAndUpdateEmail = async () => {
-  if (!newEmail || !otp) {
-    toast.error("Enter new email and OTP");
+const handleVerifyAndUpdateEmail = async (targetEmail) => {
+  if (!targetEmail || !otp) {
+    toast.error("Enter email and OTP");
     return;
   }
   try {
@@ -181,24 +231,10 @@ const handleVerifyAndUpdateEmail = async () => {
       toast.error(v.message || "Invalid OTP");
       return;
     }
-    const update = await ApiService.request({
-      method: "POST",
-      url: "update-profile",
-      data: { email: newEmail }
-    });
-    const u = update.data;
-    if (u.status) {
-      const updated = { ...(user || {}), email: newEmail };
-      localStorage.setItem('loggedUser', JSON.stringify(updated));
-      setEmail(newEmail);
-      setNewEmail("");
-      setOtp("");
-      toast.success(u.message || "Email updated");
-    } else {
-      toast.error(u.message || "Failed to update email");
-    }
+    setIsEmailVerified(true);
+    toast.success("Email verified successfully");
   } catch (e) {
-    toast.error("Failed to verify OTP or update email");
+    toast.error("Failed to verify OTP");
   }
 };
 
@@ -262,14 +298,6 @@ const handle2FAToggle = async () => {
                             <i className="bi bi-person"></i> Profile
                         </button>
                         <button
-                            className={`nav-link fs-lg-5 ${tab === "email" ? "active" : ""}`}
-                            onClick={() => setTab("email")}
-                            id="nav-profile-tab"
-                            type="button"
-                        >
-                            <i className="bi bi-envelope"></i> Change Email
-                        </button>
-                        <button
                             className={`nav-link fs-lg-5 ${tab === "password" ? "active" : ""}`}
                             onClick={() => setTab("password")}
                             id="nav-contact-tab"
@@ -293,8 +321,8 @@ const handle2FAToggle = async () => {
                             <div className="tab-content mt-5" id="nav-tabContent">
                             {tab === "profile" && (
                               <div className="tab-pane fade show active">
-                                <div className="row">
-                                  <div className="col-md-8">
+                                {/* <div className="row">
+                                  <div className="col-md-12">
                                     <label className="required fs-6 fw-semibold mb-2">Name</label>
                                     <input
                                       type="text"
@@ -304,35 +332,176 @@ const handle2FAToggle = async () => {
                                       onChange={(e) => setName(e.target.value)}
                                     />
                                   </div>
-                                  <div className="col-md-4">
-                                    <label className="fs-6 fw-semibold mb-2">Picture</label>
-                                    <div className="d-flex align-items-center gap-3">
-                                      <div className="symbol symbol-60px">
-                                        <img
-                                          src={picturePreview || user?.picture || ""}
-                                          alt="Profile"
-                                          onError={(e)=>{ e.target.src=''; }}
-                                          className="rounded"
-                                        />
+                                </div> */}
+
+                                {/* Account Details Card */}
+                                <div 
+                                  className="profile-card dashboard-card-hover mt-10" 
+                                  style={{ width: "621px", margin: "40px 0" }}
+                                  data-aos="fade-up"
+                                  data-aos-duration="1000"
+                                >
+                                  <div className="profile-header">
+                                    <div 
+                                      className="profile-image-wrapper"
+                                      onClick={() => fileInputRef.current?.click()}
+                                      title="Click to update profile picture"
+                                    >
+                                      <img
+                                        src={picturePreview || user?.picture || circle}
+                                        alt="Profile"
+                                        className={`profile-image ${!(picturePreview || user?.picture) ? 'noon-logo' : 'user-photo'}`}
+                                      />
+                                      <div className="edit-image-icon">
+                                        <i className="bi bi-camera-fill fs-2"></i>
                                       </div>
-                                      <div>
+                                    </div>
+                                    <input
+                                      type="file"
+                                      ref={fileInputRef}
+                                      style={{ display: 'none' }}
+                                      accept="image/*"
+                                      onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                          setPictureFile(file);
+                                          const reader = new FileReader();
+                                          reader.onload = () => setPicturePreview(reader.result);
+                                          reader.readAsDataURL(file);
+                                        }
+                                      }}
+                                    />
+                                    <div className="profile-info">
+                                      {isEditMode ? (
+                                        <input
+                                          type="text"
+                                          className="form-control form-control-solid mb-2"
+                                          value={profileData.name || user?.name || ''}
+                                          onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                                        />
+                                      ) : (
+                                        <h2 className="company-name">{user?.name || "Noon"}</h2>
+                                      )}
+                                    </div>
+                                    <div className="edit-button-wrapper">
+                                      <button
+                                        className="edit-btn"
+                                        onClick={() => {
+                                          if (isEditMode) {
+                                            handleProfileUpdate();
+                                          }
+                                          setIsEditMode(!isEditMode);
+                                        }}
+                                      >
+                                        {isEditMode ? (
+                                          <><i className="bi bi-check-lg text-white"></i> Save</>
+                                        ) : (
+                                          <><i className="bi bi-pencil text-white"></i> Edit Profile</>
+                                        )}
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  <div className="contact-info-grid mt-4">
+                                    <div className="contact-info-item">
+                                      <h6 className="contact-label">Email</h6>
+                                      {isEditMode ? (
+                                        <>
+                                          <div className="d-flex gap-2">
+                                            <input
+                                              type="email"
+                                              className="form-control form-control-solid"
+                                              value={profileData.email || ""}
+                                              onChange={(e) => {
+                                                setProfileData({ ...profileData, email: e.target.value });
+                                                setIsEmailVerified(false);
+                                                setIsOtpSent(false);
+                                              }}
+                                            />
+                                            {profileData.email !== user?.email && !isEmailVerified && (
+                                              <button
+                                                type="button"
+                                                className="btn rounded-pill fw-bold otp-btn"
+                                                onClick={() => handleSendEmailOtp(profileData.email)}
+                                              >
+                                                Send OTP
+                                              </button>
+                                            )}
+                                          </div>
+                                          {isOtpSent && !isEmailVerified && (
+                                            <div className="mt-2 d-flex gap-2">
+                                              <input
+                                                type="text"
+                                                className="form-control form-control-solid"
+                                                placeholder="Enter OTP"
+                                                value={otp}
+                                                onChange={(e) => setOtp(e.target.value)}
+                                              />
+                                              <button
+                                                type="button"
+                                                className="btn rounded-pill fw-bold otp-btn"
+                                                onClick={() => handleVerifyAndUpdateEmail(profileData.email)}
+                                              >
+                                                Verify
+                                              </button>
+                                            </div>
+                                          )}
+                                          {isEmailVerified && (
+                                            <div className="text-success mt-1 fs-7">
+                                              <i className="bi bi-check-circle-fill me-1"></i> Email Verified
+                                            </div>
+                                          )}
+                                        </>
+                                      ) : (
+                                        <p className="contact-value">{user?.email || "noon@shopping.com"}</p>
+                                      )}
+                                    </div>
+                                    <div className="contact-info-item">
+                                      <h6 className="contact-label">Phone</h6>
+                                      {isEditMode ? (
+                                        <input
+                                          type="text"
+                                          className="form-control form-control-solid"
+                                          value={profileData.phone || user?.phone || ''}
+                                          onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                                        />
+                                      ) : (
+                                        <div className="d-flex align-items-center gap-2">
+                                          <img src="https://flagcdn.com/w20/ae.png" alt="UAE Flag" width="20" height="15" />
+                                          <p className="contact-value mb-0">{user?.phone || "+971 24 836 9057"}</p>
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="contact-info-item">
+                                      <h6 className="contact-label">Website</h6>
+                                      {isEditMode ? (
+                                        <input
+                                          type="text"
+                                          className="form-control form-control-solid"
+                                          value={profileData.website || user?.website || ''}
+                                          onChange={(e) => setProfileData({ ...profileData, website: e.target.value })}
+                                        />
+                                      ) : (
+                                        <p className="contact-value">{user?.website || "noon.com"}</p>
+                                      )}
+                                    </div>
+                                    <div className="contact-info-item">
+                                      <h6 className="contact-label">Company Trade License</h6>
+                                      {isEditMode ? (
                                         <input
                                           type="file"
-                                          accept="image/*"
-                                          onChange={(e) => {
-                                            const file = e.target.files?.[0];
-                                            if (file) {
-                                              setPictureFile(file);
-                                              const reader = new FileReader();
-                                              reader.onload = () => setPicturePreview(reader.result);
-                                              reader.readAsDataURL(file);
-                                            }
-                                          }}
+                                          className="form-control form-control-solid"
+                                          onChange={(e) => setTradeLicenseFile(e.target.files?.[0])}
                                         />
-                                      </div>
+                                      ) : (
+                                        <div className="license-image-container">
+                                          <img src={user?.business_info?.trade_license || licenseImg} alt="Trade License" className="license-image" />
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
                                 </div>
+
                                     <button
                                       className="btn rounded-pill fw-bold mt-5"
                                       style={{ backgroundColor: "#000", color: "#fff", border: "none" }}
@@ -341,59 +510,6 @@ const handle2FAToggle = async () => {
                                   Update Profile
                                     </button>
                               </div>
-                            )}
-                            {tab === "email" && (
-                                <div className="tab-pane fade show active">
-                                <div className="form">
-                                  <div className="mb-4">
-                                    <label className="fs-6 fw-semibold mb-2">Current Email</label>
-                                    <input
-                                      type="email"
-                                      value={email}
-                                      className="form-control form-control-solid"
-                                      disabled
-                                    />
-                                  </div>
-                                  <div className="mb-4">
-                                    <label className="required fs-6 fw-semibold mb-2">New Email</label>
-                                    <div className="d-flex gap-2">
-                                      <input
-                                        type="email"
-                                        value={newEmail}
-                                        onChange={(e) => setNewEmail(e.target.value)}
-                                        className="form-control form-control-solid"
-                                        placeholder="Enter New Email"
-                                      />
-                                      <button
-                                        type="button"
-                                        className="btn rounded-pill fw-bold"
-                                        style={{ backgroundColor: "#000", color: "#fff", border: "none" }}
-                                        onClick={handleSendEmailOtp}
-                                      >
-                                        Send OTP
-                                      </button>
-                                    </div>
-                                  </div>
-                                  <div className="mb-4">
-                                    <label className="required fs-6 fw-semibold mb-2">OTP</label>
-                                    <input
-                                      type="text"
-                                      value={otp}
-                                      onChange={(e) => setOtp(e.target.value)}
-                                      className="form-control form-control-solid"
-                                      placeholder="Enter OTP"
-                                    />
-                                  </div>
-                                  <button
-                                    type="button"
-                                    className="btn rounded-pill fw-bold"
-                                    style={{ backgroundColor: "#000", color: "#fff", border: "none" }}
-                                    onClick={handleVerifyAndUpdateEmail}
-                                  >
-                                    Verify & Update Email
-                                  </button>
-                                </div>
-                                </div>
                             )}
                             {tab === "password" && (
                                 <div className="tab-pane fade show active">
@@ -484,7 +600,6 @@ const handle2FAToggle = async () => {
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>

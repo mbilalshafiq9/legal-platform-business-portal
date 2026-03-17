@@ -376,17 +376,6 @@ const Sidebar = () => {
             </div>
             )}
 
-            {hasPermission('view_employee_details') && (
-            <div className="menu-item">
-              <NavLink to="/employees/1" className="menu-link portal-nav-hover">
-                <span className="menu-icon">
-                  <i className="bi bi-person-circle fs-5"></i>
-                </span>
-                <span className="menu-title fs-6">Account</span>
-              </NavLink>
-            </div>
-            )}
-
             {hasPermission('manage_account') && (
             <div className="menu-item">
               <NavLink to="/account" className="menu-link portal-nav-hover">

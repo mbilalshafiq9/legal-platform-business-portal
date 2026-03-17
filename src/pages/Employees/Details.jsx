@@ -25,6 +25,37 @@ const EmployeeDetails = () => {
 
   // Load employee from employees list
   const loadEmployeeData = () => {
+    // Check for logged user first to make it dynamic (for "My Account" page)
+    try {
+      const loggedUserStr = localStorage.getItem("loggedUser");
+      if (loggedUserStr) {
+        const loggedUser = JSON.parse(loggedUserStr);
+        // If it's the account page (ID might be dummy '1' from sidebar), use logged user
+        if (id === "1") {
+          return {
+            id: loggedUser.id || 1,
+            name: loggedUser.name || "Noon",
+            location: loggedUser.location || "Online Shopping Internationaly",
+            email: loggedUser.email || "noon@shopping.com",
+            phone: loggedUser.phone || "+971 24 836 9057",
+            website: loggedUser.website || "noon.com",
+            description: loggedUser.description || "Noon is a Saudi Arabian-headquartered...",
+            bannerImage: employeeDetail,
+            profileImage: loggedUser.picture || circle,
+            socialMedia: loggedUser.socialMedia || {
+              facebook: "#",
+              twitter: "#",
+              instagram: "#",
+              linkedin: "#",
+            },
+            additionalInfo: "",
+          };
+        }
+      }
+    } catch (error) {
+      console.error("Error loading loggedUser in Details:", error);
+    }
+
     const employees = loadFromLocalStorage("employees_list", []);
     const foundEmployee = employees.find((emp) => emp.id === parseInt(id));
     
@@ -168,7 +199,7 @@ const EmployeeDetails = () => {
             <img
               src={employee.profileImage}
               alt="Profile"
-              className="profile-image"
+              className={`profile-image ${employee.profileImage === circle ? 'noon-logo' : 'user-photo'}`}
             />
           </div>
           <div className="profile-info">

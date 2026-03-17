@@ -91,10 +91,10 @@ const Header = () => {
   // Check if we're on the Employees page
   const isEmployeesPage = location.pathname.includes("/employees");
 
-  // Check if we're on the Employee Details page
+  // Check if we're on the Employee Details page (My Account)
   const isEmployeeDetailsPage =
-    location.pathname.includes("/employees/") &&
-    location.pathname !== "/employees";
+    location.pathname.includes("/my-account/") ||
+    location.pathname.includes("/employees/");
   const isAccountPage = location.pathname.includes("/account");
 
   const logout = () => {
@@ -560,7 +560,7 @@ const Header = () => {
     if (isLawyersPage) return { title: "Lawyers", subtitle: "Search, compare, and connect with verified lawyers instantly." };
     if (isNotificationsPage) return { title: "Notifications", subtitle: "Listing notifications" };
     if (isCaseDetailsPage) return { title: "Case Summary", subtitle: "Detail" };
-    if (isEmployeeDetailsPage) return { title: "Employee Details", subtitle: "View and manage employee information." };
+    if (isEmployeeDetailsPage) return { title: "My Account", subtitle: "View and manage account information." };
     if (isEmployeesPage) return { title: "Team", subtitle: "Add your team members and send invites." };
     if (isAccountPage) return { title: "Account", subtitle: "Manage profile, email, and security." };
     
