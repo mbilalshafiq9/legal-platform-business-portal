@@ -86,7 +86,8 @@ body.dark-mode {
 }
 
 /* Dark mode header styles */
-body.dark-mode .app-header {
+body.dark-mode .app-header,
+body.dark-mode .modern-header-container {
   background-color: #2d2d2d !important;
   border-bottom: 0.1px solid #A4A4A4 !important;
 }

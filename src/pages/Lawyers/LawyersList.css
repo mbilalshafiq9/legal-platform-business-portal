@@ -1,0 +1,85 @@
+/* Lawyers List Styles */
+
+@media (max-width: 767px) {
+  /* Fix header bar layout on mobile */
+  .lawyers-list-header-bar {
+    padding-top: 15px !important;
+    padding-bottom: 15px !important;
+    min-height: 80px !important;
+  }
+
+  /* Fix search icon alignment in the search bar */
+  .lawyers-list-header-bar .bi-search {
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    left: 20px !important;
+    margin-top: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    height: 20px !important; /* Set to something more reasonable for icon centering */
+    line-height: 1 !important;
+  }
+
+  .lawyers-search-container {
+    width: auto !important;
+    min-width: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* Redesign Clear Filters button to look more elegant */
+  .lawyers-list-header-bar .clear-filters-btn {
+    border: 1px solid #000 !important;
+    color: #000 !important;
+    background: transparent !important;
+    font-weight: 500 !important;
+    border-radius: 20px !important;
+    padding: 6px 12px !important;
+    height: 36px !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    margin-left: 10px !important;
+    font-size: 0.8rem !important;
+    transition: all 0.2s ease !important;
+    text-decoration: none !important;
+    white-space: nowrap !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .lawyers-list-header-bar .clear-filters-btn:hover {
+    background-color: #000 !important;
+    color: #fff !important;
+  }
+
+  /* Center align the filter tabs (Company, Individual, Categories, Jurisdiction) */
+  .lawyers-filter-tabs {
+    justify-content: center !important;
+    gap: 12px !important;
+    padding: 10px 16px !important;
+    margin-bottom: 20px !important;
+  }
+
+  /* Ensure filter buttons look good when centered on mobile */
+  .lawyers-filter-tabs > div {
+    min-width: calc(50% - 12px) !important;
+    flex: 0 0 calc(50% - 12px) !important;
+    margin-bottom: 0px !important;
+    display: flex !important;
+  }
+
+  .lawyers-filter-tabs .btn {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+  }
+
+  .lawyers-filter-tabs .position-relative {
+    width: 100% !important;
+  }
+}

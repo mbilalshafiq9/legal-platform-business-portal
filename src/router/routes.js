@@ -200,7 +200,7 @@ const routes = [
     },
 
     {
-        path: '/employees/:id',
+        path: '/my-account/:id',
         component: EmployeeDetails,
         meta: { requiresAuth: true, hideHeader: false, permission: 'view-employee-details' }
     },

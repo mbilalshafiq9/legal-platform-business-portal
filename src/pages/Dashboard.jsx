@@ -43,7 +43,10 @@ const Dashboard = () => {
   // Select states
   const [postQuestionJurisdiction, setPostQuestionJurisdiction] =
     useState(null);
-  const [showPostQuestionJurisdictionDropdown, setShowPostQuestionJurisdictionDropdown] = useState(false);
+  const [
+    showPostQuestionJurisdictionDropdown,
+    setShowPostQuestionJurisdictionDropdown,
+  ] = useState(false);
   const [postQuestionText, setPostQuestionText] = useState("");
   const postQuestionJurisdictionRef = useRef(null);
   const [jurisdictionSearch, setJurisdictionSearch] = useState("");
@@ -122,7 +125,7 @@ const Dashboard = () => {
         setTimeout(() => {
           setShowPostQuestion(false);
         }, 300);
-        
+
         // Refresh dashboard data
         fetchDashboardData();
       } else {
@@ -139,7 +142,7 @@ const Dashboard = () => {
     const initData = async () => {
       setLoading(true);
       await fetchDashboardData();
-      
+
       // Fetch jurisdictions for Post Question dropdown
       try {
         const dropdownResponse = await ApiService.request({
@@ -147,10 +150,14 @@ const Dashboard = () => {
           url: "getDropdownData",
         });
         const dropdownData = dropdownResponse.data;
-        if (dropdownData.status && dropdownData.data && dropdownData.data.jurisdictions) {
-          const options = dropdownData.data.jurisdictions.map(j => ({
+        if (
+          dropdownData.status &&
+          dropdownData.data &&
+          dropdownData.data.jurisdictions
+        ) {
+          const options = dropdownData.data.jurisdictions.map((j) => ({
             label: j.name,
-            value: j.id
+            value: j.id,
           }));
           setJurisdictionOptions(options);
         }
@@ -166,17 +173,20 @@ const Dashboard = () => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (postQuestionJurisdictionRef.current && !postQuestionJurisdictionRef.current.contains(event.target)) {
+      if (
+        postQuestionJurisdictionRef.current &&
+        !postQuestionJurisdictionRef.current.contains(event.target)
+      ) {
         setShowPostQuestionJurisdictionDropdown(false);
       }
     };
 
     if (showPostQuestionJurisdictionDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showPostQuestionJurisdictionDropdown]);
 
@@ -188,7 +198,10 @@ const Dashboard = () => {
             id="kt_app_content_container"
             className="app-container container-fluid"
           >
-            <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "50vh" }}>
+            <div
+              className="d-flex justify-content-center align-items-center"
+              style={{ minHeight: "50vh" }}
+            >
               <div className="spinner-border text-primary" role="status">
                 <span className="visually-hidden">Loading...</span>
               </div>
@@ -218,9 +231,7 @@ const Dashboard = () => {
                     style={{ width: "32px", height: "32px" }}
                   />
                 </div>
-                <span className="welcome-message-text">
-                  {displayedText}
-                </span>
+                <span className="welcome-message-text">{displayedText}</span>
               </div>
             </div>
           )}
@@ -356,17 +367,27 @@ const Dashboard = () => {
 
               {/* Recent Posted Question and Lawyer Respond */}
               <div
-                className="card mb-6 shadow recent-posted-question-card recent-question-card-hover dashboard-recent-question-card"
+                className="card mb-6 shadow recent-posted-question-card recent-question-card-hover dashboard-recent-question-card position-relative"
                 data-aos="fade-up"
                 data-aos-delay="500"
               >
                 <div className="card-body p-4">
+                  <NavLink to={"/all-questions"}>
+                    <a
+                      href="#"
+                      className="fw-semibold text-decoration-none text-black seeAll-button d-lg-none"
+                    >
+                      See All
+                    </a>
+                  </NavLink>
                   <div className="row">
                     {/* Recent Posted Question Section */}
-                    <div className="col-lg-7 col-md-12 mb-4 mb-lg-0">
-                      <h1 className="fw-bold text-dark mb-4">
-                        Recent Posted Question
-                      </h1>
+                    <div className="col-lg-7 col-md-12 mb-4 mb-lg-0 border-end">
+                      <div className="d-flex justify-content-between align-items-center mb-4">
+                        <h1 className="fw-bold text-dark mb-0">
+                          Recent Posted Question
+                        </h1>
+                      </div>
                       {recentQuestion ? (
                         <>
                           <p className="text-gray-700 mb-4">
@@ -375,11 +396,15 @@ const Dashboard = () => {
                           <div className="d-flex flex-wrap align-items-center gap-3 mb-3">
                             <div className="d-flex align-items-center">
                               <i className="bi bi-eye-fill text-black me-2"></i>
-                              <span className="text-black">Views: {recentQuestion.views_count || 0}</span>
+                              <span className="text-black">
+                                Views: {recentQuestion.views_count || 0}
+                              </span>
                             </div>
                             <div className="d-flex align-items-center">
                               <i className="bi bi-chat-dots-fill text-black me-2"></i>
-                              <span className="text-black">Ans: {recentQuestion.answers_count || 0}</span>
+                              <span className="text-black">
+                                Ans: {recentQuestion.answers_count || 0}
+                              </span>
                             </div>
                           </div>
                           {recentQuestion.created_at && (
@@ -395,52 +420,71 @@ const Dashboard = () => {
                         </>
                       ) : (
                         <p className="text-gray-600">
-                          <img src={noData} alt="No Data" className="w-150px mt-3" /> <br />
-                          No questions posted yet</p>
+                          <img
+                            src={noData}
+                            alt="No Data"
+                            className="w-150px mt-3"
+                          />{" "}
+                          <br />
+                          No questions posted yet
+                        </p>
                       )}
                     </div>
 
                     {/* Lawyer Respond Section */}
                     <div className="col-lg-5 col-md-12">
-                      <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
-                        <h2 className="fw-bold mb-0 mb-md-0 dashboard-lawyer-respond-title">
+                      <div className="d-flex flex-row justify-content-between align-items-center mb-4">
+                        <h2 className="fw-bold mb-0 dashboard-lawyer-respond-title">
                           Lawyer Respond
                         </h2>
-                        <a
-                          href="#"
-                          className="text-muted fw-semibold text-decoration-none text-md-end"
-                        >
-                          See All
-                        </a>
+                        <NavLink to={"/all-questions"} className="d-none d-lg-block">
+                          <a
+                            href="#"
+                            className="text-black fw-semibold text-decoration-none"
+                          >
+                            See All
+                          </a>
+                        </NavLink>
                       </div>
 
                       {lawyerResponses.length > 0 ? (
-                        lawyerResponses.slice(0, 3).map((lawyer, index, array) => (
-                          <div key={lawyer.id || index} className={`d-flex align-items-start ${index < array.length - 1 ? 'mb-4' : ''}`}>
-                            <div className="symbol symbol-50px me-3 flex-shrink-0">
-                              <img
-                                src={lawyer.picture || notificationProfile}
-                                alt={lawyer.name}
-                                className="rounded-circle"
-                                onError={(e) => {
-                                  e.target.src = notificationProfile;
-                                }}
-                              />
+                        lawyerResponses
+                          .slice(0, 3)
+                          .map((lawyer, index, array) => (
+                            <div
+                              key={lawyer.id || index}
+                              className={`d-flex align-items-start ${index < array.length - 1 ? "mb-4" : ""}`}
+                            >
+                              <div className="symbol symbol-50px me-3 flex-shrink-0">
+                                <img
+                                  src={lawyer.picture || notificationProfile}
+                                  alt={lawyer.name}
+                                  className="rounded-circle"
+                                  onError={(e) => {
+                                    e.target.src = notificationProfile;
+                                  }}
+                                />
+                              </div>
+                              <div className="flex-grow-1">
+                                <h6 className="fw-bold text-dark mb-1">
+                                  {lawyer.name}
+                                </h6>
+                                <p className="text-gray-600 mb-0 small">
+                                  {lawyer.answer || "Answered your question"}
+                                </p>
+                              </div>
                             </div>
-                            <div className="flex-grow-1">
-                              <h6 className="fw-bold text-dark mb-1">
-                                {lawyer.name}
-                              </h6>
-                              <p className="text-gray-600 mb-0 small">
-                                {lawyer.answer || "Answered your question"}
-                              </p>
-                            </div>
-                          </div>
-                        ))
+                          ))
                       ) : (
                         <p className="text-gray-600">
-                          <img src={noData} alt="No Data" className="w-150px mt-3" /> <br />
-                          No lawyer responses yet</p>
+                          <img
+                            src={noData}
+                            alt="No Data"
+                            className="w-150px mt-3"
+                          />{" "}
+                          <br />
+                          No lawyer responses yet
+                        </p>
                       )}
                     </div>
                   </div>
@@ -449,29 +493,18 @@ const Dashboard = () => {
 
               {/* My Lawyers */}
               <div
-                className="card shadow-sm border-0 dashboard-my-lawyers-card"
+                className="card shadow-sm border-0 dashboard-my-lawyers-card position-relative"
                 data-aos="fade-up"
                 data-aos-delay="400"
               >
                 <div className="card-body p-4">
                   {/* Header */}
-                  <div className="d-flex justify-content-between align-items-center mb-4">
+                  <div className="d-flex align-items-center mb-4">
                     <h4 className="fw-bold text-dark mb-0">My Lawyers</h4>
-                    
-                    <NavLink to={"/my-lawyers"}>
-                      <a
-                        href="#"
-                        className="fw-semibold text-decoration-none text-muted"
-                      >
-                        See All
-                      </a>
-                    </NavLink>
-                  </div>
-
-                  {/* Tab Buttons */}
-                  <div className="my-4 lawyers-tabs">
+                    {/* Tab Buttons */}
+                    <div className="my-4 lawyers-tabs ms-5">
                       <button
-                        className={`btn rounded-pill portal-tab-hover ${
+                        className={`btn rounded-pill me-5 portal-tab-hover ${
                           activeTab === "active"
                             ? "bg-black text-white"
                             : "btn-light text-black"
@@ -491,41 +524,50 @@ const Dashboard = () => {
                         Inactive Lawyers
                       </button>
                     </div>
+                  </div>
+
+                  
 
                   {/* Lawyers List */}
-                  {(activeTab === "active" ? activeLawyers : inactiveLawyers).length > 0 ? (
-                    (activeTab === "active" ? activeLawyers : inactiveLawyers).map((lawyer, index) => (
-                    <div
-                      key={lawyer.id || index}
-                      className="card mb-3 border-0 shadow-sm lawyer-card-hover"
-                      data-aos="fade-up"
-                      data-aos-delay={`${500 + index * 100}`}
-                    >
-                      <div className="card-body p-3">
-                        <div className="row align-items-center">
-                          {/* Profile */}
-                          <div className="col-md-4 col-sm-12 mb-2 mb-md-0">
-                            <div className="d-flex align-items-center">
-                              <img
-                                src={lawyer.lawyer_picture || notificationProfile}
-                                alt={lawyer.lawyer_name}
-                                className="rounded-circle me-3"
-                                width="48"
-                                height="48"
-                                onError={(e) => {
-                                  e.target.src = notificationProfile;
-                                }}
-                              />
-                              <div>
-                                <h6 className="fw-bold text-dark mb-0">
-                                  {lawyer.lawyer_name}
-                                </h6>
-                                <small className="text-muted">
-                                  {lawyer.practice_areas || "Lawyer"}
-                                </small>
+                  {(activeTab === "active" ? activeLawyers : inactiveLawyers)
+                    .length > 0 ? (
+                    (activeTab === "active"
+                      ? activeLawyers
+                      : inactiveLawyers
+                    ).map((lawyer, index) => (
+                      <div
+                        key={lawyer.id || index}
+                        className="card mb-3 border-0 shadow-sm lawyer-card-hover"
+                        data-aos="fade-up"
+                        data-aos-delay={`${500 + index * 100}`}
+                      >
+                        <div className="card-body p-3">
+                          <div className="row align-items-center">
+                            {/* Profile */}
+                            <div className="col-md-4 col-sm-12 mb-2 mb-md-0">
+                              <div className="d-flex align-items-center">
+                                <img
+                                  src={
+                                    lawyer.lawyer_picture || notificationProfile
+                                  }
+                                  alt={lawyer.lawyer_name}
+                                  className="rounded-circle me-3"
+                                  width="48"
+                                  height="48"
+                                  onError={(e) => {
+                                    e.target.src = notificationProfile;
+                                  }}
+                                />
+                                <div>
+                                  <h6 className="fw-bold text-dark mb-0">
+                                    {lawyer.lawyer_name}
+                                  </h6>
+                                  <small className="text-muted">
+                                    {lawyer.practice_areas || "Lawyer"}
+                                  </small>
+                                </div>
                               </div>
                             </div>
-                          </div>
 
                             {/* Practice Areas */}
                             <div className="col-md-3 col-sm-6 mb-2 mb-md-0">
@@ -537,26 +579,45 @@ const Dashboard = () => {
                             {/* Renewal Date */}
                             <div className="col-md-3 col-sm-6 mb-2 mb-md-0">
                               <div className="text-muted small">
-                                {lawyer.renewal_date ? `Renew ${lawyer.renewal_date}` : "N/A"}
+                                {lawyer.renewal_date
+                                  ? `Renew ${lawyer.renewal_date}`
+                                  : "N/A"}
                               </div>
                             </div>
 
                             {/* Price */}
                             <div className="col-md-2 col-sm-12 text-md-end">
                               <div className="fw-semibold text-dark">
-                                {lawyer.price ? `${lawyer.price.toFixed(2)} ${lawyer.currency || 'USD'}` : "N/A"}
+                                {lawyer.price
+                                  ? `${lawyer.price.toFixed(2)} ${lawyer.currency || "USD"}`
+                                  : "N/A"}
                               </div>
                             </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
                     ))
                   ) : (
                     <p className="text-gray-600">
-                          <img src={noData} alt="No Data" className="w-150px mt-3" /> <br />
-                      No {activeTab === "active" ? "active" : "inactive"} lawyers found</p>
+                      <img
+                        src={noData}
+                        alt="No Data"
+                        className="w-150px mt-3"
+                      />{" "}
+                      <br />
+                      No {activeTab === "active" ? "active" : "inactive"}{" "}
+                      lawyers found
+                    </p>
                   )}
                 </div>
+                <NavLink to={"/my-lawyers"}>
+                    <a
+                      href="#"
+                      className="fw-semibold text-decoration-none text-black seeAll-button"
+                    >
+                      See All
+                    </a>
+                  </NavLink>
               </div>
             </div>
 
@@ -570,9 +631,11 @@ const Dashboard = () => {
                 <div className="card-body p-4">
                   <div className="d-flex justify-content-between align-items-center mb-4">
                     <h2 className="fw-bold text-dark mb-0">My Cases</h2>
-                    <NavLink to={"/my-cases"} 
-                        className="text-muted fw-semibold text-decoration-none">
-                        See All
+                    <NavLink
+                      to={"/my-cases"}
+                      className="text-black fw-semibold text-decoration-none"
+                    >
+                      See All
                     </NavLink>
                   </div>
 
@@ -625,31 +688,35 @@ const Dashboard = () => {
                   </div>
 
                   {notifications.length > 0 ? (
-                    notifications.slice(0, 4).map((notification, index, array) => (
-                      <div
-                        key={notification.id || index}
-                        className={`d-flex align-items-start ${index < array.length - 1 ? 'mb-4' : ''} notification-item-hover`}
-                        data-aos="fade-up"
-                        data-aos-delay={`${1100 + index * 100}`}
-                      >
-                        <div className="symbol symbol-40px me-3 flex-shrink-0">
-                          <img
-                            src={notification.picture || notificationProfile}
-                            alt="Notification"
-                            className="rounded-circle"
-                            onError={(e) => {
-                              e.target.src = notificationProfile;
-                            }}
-                          />
+                    notifications
+                      .slice(0, 4)
+                      .map((notification, index, array) => (
+                        <div
+                          key={notification.id || index}
+                          className={`d-flex align-items-start ${index < array.length - 1 ? "mb-4" : ""} notification-item-hover`}
+                          data-aos="fade-up"
+                          data-aos-delay={`${1100 + index * 100}`}
+                        >
+                          <div className="symbol symbol-40px me-3 flex-shrink-0">
+                            <img
+                              src={notification.picture || notificationProfile}
+                              alt="Notification"
+                              className="rounded-circle"
+                              onError={(e) => {
+                                e.target.src = notificationProfile;
+                              }}
+                            />
+                          </div>
+                          <div className="flex-grow-1">
+                            <p className="text-gray-600 mb-2 small">
+                              {notification.message || "No message"}
+                            </p>
+                            <span className="text-gray-500 small">
+                              {notification.time_ago || "Just now"}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex-grow-1">
-                          <p className="text-gray-600 mb-2 small">
-                            {notification.message || "No message"}
-                          </p>
-                          <span className="text-gray-500 small">{notification.time_ago || "Just now"}</span>
-                        </div>
-                      </div>
-                    ))
+                      ))
                   ) : (
                     <p className="text-gray-600">No notifications</p>
                   )}
@@ -670,9 +737,9 @@ const Dashboard = () => {
       />
 
       {/* Create Case Modal */}
-      <CreateCaseModal 
-        show={showCreateCase} 
-        onClose={() => setShowCreateCase(false)} 
+      <CreateCaseModal
+        show={showCreateCase}
+        onClose={() => setShowCreateCase(false)}
         onSuccess={fetchDashboardData}
       />
 

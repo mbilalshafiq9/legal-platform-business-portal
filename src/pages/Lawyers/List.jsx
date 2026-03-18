@@ -8,6 +8,7 @@ import ApiService from "../../services/ApiService";
 import { toast } from "react-toastify";
 import PaymentModal from "../../components/PaymentModal";
 import LawyerDetailsPopup from "../../components/LawyerDetailsPopup";
+import "./LawyersList.css";
 
 const List = () => {
   const location = useLocation();
@@ -575,7 +576,7 @@ const List = () => {
         <div className="col-12 px-0">
           {/* Search Bar + Clear Filters */}
           <div
-            className="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 bg-white lawyers-list-header-bar"
+            className="d-flex justify-content-between align-items-center mb-4 bg-white lawyers-list-header-bar"
             style={{
               borderBottom: "0.1px solid #e6e6e6",
               borderTop: "0.1px solid #e6e6e6",
@@ -584,8 +585,8 @@ const List = () => {
             }}
           >
             <div
-              className="position-relative my-4 my-md-5 flex-grow-1"
-              style={{ width: "100%", maxWidth: "1096px" }}
+              className="position-relative my-md-5 flex-grow-1 lawyers-search-container"
+              style={{ maxWidth: "1096px" }}
             >
               <input
                 type="text"
@@ -605,7 +606,7 @@ const List = () => {
                 }}
               />
               <i
-                className="bi bi-search position-absolute top-50 translate-middle-y text-muted fs-5"
+                className="bi bi-search position-absolute top-50 translate-middle-y text-black fs-5"
                 style={{ left: "20px" }}
               ></i>
             </div>
@@ -615,7 +616,7 @@ const List = () => {
               typeFilter !== "Company") && (
               <button
                 type="button"
-                className="btn btn-outline-secondary ms-md-3 mb-4 mb-md-0"
+                className="btn btn-outline-secondary clear-filters-btn ms-md-3 mb-md-0"
                 onClick={clearFilters}
                 style={{ borderRadius: "25px", height: "40px", whiteSpace: "nowrap" }}
               >
@@ -788,10 +789,11 @@ const List = () => {
                     </h5>
                     <div className="d-flex align-items-center justify-content-start mb-3">
                       <div className="d-flex align-items-center me-5">
-                        <i className="bi bi-star-fill text-dark me-1" style={{ fontSize: "0.9rem" }}></i>
-                        <span className="fw-bold text-dark lawyers-rating-hover" style={{ fontSize: "0.9rem" }}>
+                        <span className="fw-bold text-dark lawyers-rating-hover me-2" style={{ fontSize: "0.9rem" }}>
                           {lawyer.rating}
                         </span>
+                        <i className="bi bi-star-fill me-1" style={{ fontSize: "0.9rem", color: "#FFB600" }}></i>
+                        
                       </div>
                       <div className="d-flex align-items-center">
                         <i className="bi bi-geo-alt-fill text-muted me-1" style={{ fontSize: "0.8rem" }}></i>

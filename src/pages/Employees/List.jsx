@@ -3,13 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Dropdown } from "react-bootstrap";
 import notificationProfile from "../../assets/images/notification-profile.png";
+import idImg from "../../assets/images/id.png";
+import emailImg from "../../assets/images/email-teams.png";
+import callImg from "../../assets/images/call-teams.png";
+import roleImg from "../../assets/images/role-teams.png";
 import ApiService from "../../services/ApiService";
 
 // Custom Toggle for Dropdown
 const CustomToggle = React.forwardRef(({ children, onClick }, ref) => (
   <button
     className="btn btn-light btn-sm rounded-circle text-center p-0 shadow-sm"
-    style={{ width: "32px", height: "32px", border: "none"  }}
+    style={{ width: "32px", height: "32px", border: "none" }}
     ref={ref}
     onClick={(e) => {
       e.preventDefault();
@@ -26,9 +30,13 @@ const EmployeesList = () => {
   const loadFromLocalStorage = (key, defaultValue) => {
     try {
       const saved = localStorage.getItem(key);
-      if (saved && saved !== 'undefined') {
+      if (saved && saved !== "undefined") {
         // Only parse if it looks like JSON
-        if (saved.startsWith('{') || saved.startsWith('[') || saved.startsWith('"')) {
+        if (
+          saved.startsWith("{") ||
+          saved.startsWith("[") ||
+          saved.startsWith('"')
+        ) {
           return JSON.parse(saved);
         }
         return saved;
@@ -40,7 +48,7 @@ const EmployeesList = () => {
   };
 
   const [searchTerm, setSearchTerm] = useState(
-    loadFromLocalStorage("employees_searchTerm", "")
+    loadFromLocalStorage("employees_searchTerm", ""),
   );
   const [showAddEmployee, setShowAddEmployee] = useState(false);
   const navigate = useNavigate();
@@ -59,7 +67,7 @@ const EmployeesList = () => {
   });
 
   const [employees, setEmployees] = useState(
-    loadFromLocalStorage("employees_list", [])
+    loadFromLocalStorage("employees_list", []),
   );
   const [loading, setLoading] = useState(false);
   const [showRolesModal, setShowRolesModal] = useState(false);
@@ -141,7 +149,7 @@ const EmployeesList = () => {
     (employee) =>
       employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       employee.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.location.toLowerCase().includes(searchTerm.toLowerCase())
+      employee.location.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const handleEmployeeClick = (employeeId) => {
@@ -198,9 +206,13 @@ const EmployeesList = () => {
 
   const handleAddEmployee = async (e) => {
     e.preventDefault();
-    
+
     // Validate required fields
-    if (!formData.fullName.trim() || !formData.email.trim() || !formData.phone.trim()) {
+    if (
+      !formData.fullName.trim() ||
+      !formData.email.trim() ||
+      !formData.phone.trim()
+    ) {
       toast.error("Please fill in all required fields (Name, Email, Phone)");
       return;
     }
@@ -258,7 +270,12 @@ const EmployeesList = () => {
             return [...prev, savedEmployee];
           }
         });
-        toast.success(data.message || (formData.id ? "Employee updated successfully!" : "Employee added successfully!"));
+        toast.success(
+          data.message ||
+            (formData.id
+              ? "Employee updated successfully!"
+              : "Employee added successfully!"),
+        );
       } else {
         toast.error(data.message || "Failed to save employee");
         return;
@@ -268,7 +285,7 @@ const EmployeesList = () => {
       toast.error("Failed to save employee. Please try again.");
       return;
     }
-    
+
     // Reset form and close offcanvas
     const emptyFormData = {
       id: null,
@@ -311,7 +328,7 @@ const EmployeesList = () => {
               style={{ flex: "1", minWidth: "200px", maxWidth: "500px" }}
             >
               <i
-                className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"
+                className="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-black"
                 style={{ zIndex: 10 }}
               ></i>
               <input
@@ -329,9 +346,24 @@ const EmployeesList = () => {
               />
             </div>
 
+            <button
+              className="btn btn-white px-4 py-3 d-flex align-items-center gap-2 employees-filter-button"
+              style={{
+                borderRadius: "50px",
+                border: "1px solid #e0e0e0",
+                fontSize: "14px",
+                fontWeight: "500",
+                backgroundColor: "#ffffff",
+                color: "#000000",
+              }}
+            >
+              <i className="bi bi-sliders"></i>
+              Filter
+            </button>
+
             <div className="d-flex gap-2">
               <button
-                className="btn btn-white px-4 py-3 d-flex align-items-center gap-2 employees-add-button"
+                className="btn btn-white px-4 py-3 d-flex align-items-center gap-2 employees-add-button employees-add-button-hover-fix"
                 style={{
                   borderRadius: "50px",
                   border: "none",
@@ -406,184 +438,193 @@ const EmployeesList = () => {
           {!loading &&
             filteredEmployees.length > 0 &&
             filteredEmployees.map((employee, index) => (
-            <div
-              key={employee.id}
-              className="col-lg-4 col-md-6 mb-4"
-              data-aos="fade-up"
-              data-aos-delay={index * 100}
-            >
               <div
-                className="card h-100 portal-card-hover"
-                style={{ borderRadius: "12px", cursor: "pointer", position: "relative" }}
-                onClick={() => handleEmployeeClick(employee.id)}
+                key={employee.id}
+                className="col-lg-4 col-md-6 mb-4"
+                data-aos="fade-up"
+                data-aos-delay={index * 100}
               >
-                {/* Edit/Delete Actions */}
-                <div className="position-absolute top-0 end-0 p-3" style={{ zIndex: 10 }}>
-                  <Dropdown align="end" onClick={(e) => e.stopPropagation()}>
-                    <Dropdown.Toggle as={CustomToggle}>
-                      <i className="bi bi-three-dots-vertical"></i>
-                    </Dropdown.Toggle>
+                <div
+                  className="card h-100 portal-card-hover"
+                  style={{
+                    borderRadius: "12px",
+                    cursor: "pointer",
+                    position: "relative",
+                  }}
+                  onClick={() => handleEmployeeClick(employee.id)}
+                >
+                  {/* Edit/Delete Actions */}
+                  <div
+                    className="position-absolute top-0 end-0 p-3"
+                    style={{ zIndex: 10 }}
+                  >
+                    <Dropdown align="end" onClick={(e) => e.stopPropagation()}>
+                      <Dropdown.Toggle as={CustomToggle}>
+                        <i className="bi bi-three-dots-vertical"></i>
+                      </Dropdown.Toggle>
 
-                    <Dropdown.Menu>
-                      <Dropdown.Item onClick={(e) => handleEditEmployee(employee, e)}>
-                        <i className="bi bi-pencil me-2"></i> Edit
-                      </Dropdown.Item>
-                      <Dropdown.Item 
-                        className="text-danger" 
-                        onClick={(e) => handleDeleteEmployee(employee.id, e)}
-                      >
-                        <i className="bi bi-trash me-2"></i> Delete
-                      </Dropdown.Item>
-                    </Dropdown.Menu>
-                  </Dropdown>
-                </div>
-
-                <div className="card-body p-4">
-                  <div className="d-flex align-items-start mb-3">
-                    <div className="symbol symbol-60px me-3">
-                      <img
-                        src={employee.profileImage}
-                        alt={employee.name}
-                        className="rounded-circle"
-                        style={{
-                          width: "60px",
-                          height: "60px",
-                          objectFit: "cover",
-                        }}
-                      />
-                    </div>
-                    <div className="flex-grow-1">
-                      <h5 className="fw-bold text-dark mb-1">
-                        {employee.name}
-                      </h5>
-                      <p className="text-gray-600 mb-0">{employee.location}</p>
-                    </div>
+                      <Dropdown.Menu>
+                        <Dropdown.Item
+                          onClick={(e) => handleEditEmployee(employee, e)}
+                        >
+                          <i className="bi bi-pencil me-2"></i> Edit
+                        </Dropdown.Item>
+                        <Dropdown.Item
+                          className="text-danger"
+                          onClick={(e) => handleDeleteEmployee(employee.id, e)}
+                        >
+                          <i className="bi bi-trash me-2"></i> Delete
+                        </Dropdown.Item>
+                      </Dropdown.Menu>
+                    </Dropdown>
                   </div>
 
-                  <div className="employee-details">
-                    {/* Default layout - 2 rows with 2 items each */}
-                    <div className="employee-details-default">
-                      <div className="row mb-2">
-                        <div className="col-6">
-                          <div className="d-flex align-items-center">
-                            <i
-                              className="bi bi-person-fill text-dark me-2"
-                              style={{ width: "14px", fontSize: "12px" }}
-                            ></i>
-                            <span
-                              className="text-dark fw-semibold"
-                              style={{ fontSize: "13px" }}
-                            >
-                              {employee.employeeId}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="col-6">
-                          <div className="d-flex align-items-center">
-                            <i
-                              className="bi bi-envelope-fill text-dark me-2"
-                              style={{ width: "14px", fontSize: "12px" }}
-                            ></i>
-                            <span
-                              className="text-dark fw-semibold"
-                              style={{ fontSize: "13px" }}
-                            >
-                              {employee.email}
-                            </span>
-                          </div>
-                        </div>
+                  <div className="card-body p-4">
+                    <div className="d-flex align-items-start mb-3 border-bottom pb-5">
+                      <div className="symbol symbol-60px me-3">
+                        <img
+                          src={employee.profileImage}
+                          alt={employee.name}
+                          className="rounded-circle"
+                          style={{
+                            width: "60px",
+                            height: "60px",
+                            objectFit: "cover",
+                          }}
+                        />
                       </div>
-                      <div className="row">
-                        <div className="col-6">
-                          <div className="d-flex align-items-center">
-                            <i
-                              className="bi bi-telephone-fill text-dark me-2"
-                              style={{ width: "14px", fontSize: "12px" }}
-                            ></i>
-                            <span
-                              className="text-dark fw-semibold"
-                              style={{ fontSize: "13px" }}
-                            >
-                              {employee.phone}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="col-6">
-                          <div className="d-flex align-items-center">
-                            <i
-                              className="bi bi-gear-fill text-dark me-2"
-                              style={{ width: "14px", fontSize: "12px" }}
-                            ></i>
-                            <span
-                              className="text-dark fw-semibold"
-                              style={{ fontSize: "13px" }}
-                            >
-                              Role: {employee.role}
-                            </span>
-                          </div>
-                        </div>
+                      <div className="flex-grow-1">
+                        <h5 className="fw-bold text-dark mb-1">
+                          {employee.name}
+                        </h5>
+                        <p className="text-gray-600 mb-0">
+                          {employee.location}
+                        </p>
                       </div>
                     </div>
 
-                    {/* Hover layout - 2 rows with 2 items each */}
-                    <div className="employee-details-hover">
-                      <div className="row mb-2">
-                        <div className="col-6">
-                          <div className="d-flex align-items-center">
-                            <i
-                              className="bi bi-person-fill text-white me-2"
-                              style={{ width: "14px", fontSize: "12px" }}
-                            ></i>
-                            <span
-                              className="text-white fw-semibold"
-                              style={{ fontSize: "13px" }}
-                            >
-                              {employee.employeeId}
-                            </span>
+                    <div className="employee-details">
+                      {/* Default layout - 2 rows with 2 items each */}
+                      <div className="employee-details-default">
+                        <div className="row mb-2">
+                          <div className="col-6">
+                            <div className="d-flex align-items-center">
+                              <img
+                                src={idImg}
+                                alt=""
+                                style={{ width: "17px", height: "auto", marginRight: "10px" }}
+                              />
+                              <span
+                                className=" fw-semibold"
+                                style={{ fontSize: "13px", color: "#696969" }}
+                              >
+                                #{employee.employeeId}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="col-6">
+                            <div className="d-flex align-items-center">
+                              <img
+                                src={emailImg}
+                                alt=""
+                                style={{ width: "15px", height: "12px", marginRight: "10px" }}
+                              />
+
+                              <span
+                                className="fw-semibold"
+                                style={{ fontSize: "13px", color: "#696969" }}
+                              >
+                                {employee.email}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                        <div className="col-6">
-                          <div className="d-flex align-items-center">
-                            <i
-                              className="bi bi-envelope-fill text-white me-2"
-                              style={{ width: "14px", fontSize: "12px" }}
-                            ></i>
-                            <span
-                              className="text-white fw-semibold"
-                              style={{ fontSize: "13px" }}
-                            >
-                              {employee.email}
-                            </span>
+                        <div className="row">
+                          <div className="col-6">
+                            <div className="d-flex align-items-center">
+                              <img src={ callImg } alt="" style={{ width: "16px", height: "auto", marginRight: "10px" }} />
+                              <span
+                                className="fw-semibold"
+                                style={{ fontSize: "13px", color: "#696969" }}
+                              >
+                                {employee.phone}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="col-6">
+                            <div className="d-flex align-items-center">
+                              <img src={ roleImg } alt="" style={{ width: "21px", height: "auto", marginRight: "10px" }} />
+                              <span
+                                className="fw-semibold"
+                                style={{ fontSize: "13px", color: "#696969" }}
+                              >
+                                Role: {employee.role}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </div>
-                      <div className="row">
-                        <div className="col-6">
-                          <div className="d-flex align-items-center">
-                            <i
-                              className="bi bi-telephone-fill text-white me-2"
-                              style={{ width: "14px", fontSize: "12px" }}
-                            ></i>
-                            <span
-                              className="text-white fw-semibold"
-                              style={{ fontSize: "13px" }}
-                            >
-                              {employee.phone}
-                            </span>
+
+                      {/* Hover layout - 2 rows with 2 items each */}
+                      <div className="employee-details-hover">
+                        <div className="row mb-2">
+                          <div className="col-6">
+                            <div className="d-flex align-items-center">
+                              <i
+                                className="bi bi-person-fill text-white me-2"
+                                style={{ width: "14px", fontSize: "12px" }}
+                              ></i>
+                              <span
+                                className="text-white fw-semibold"
+                                style={{ fontSize: "13px" }}
+                              >
+                                {employee.employeeId}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="col-6">
+                            <div className="d-flex align-items-center">
+                              <i
+                                className="bi bi-envelope-fill text-white me-2"
+                                style={{ width: "14px", fontSize: "12px" }}
+                              ></i>
+                              <span
+                                className="text-white fw-semibold"
+                                style={{ fontSize: "13px" }}
+                              >
+                                {employee.email}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                        <div className="col-6">
-                          <div className="d-flex align-items-center">
-                            <i
-                              className="bi bi-gear-fill text-white me-2"
-                              style={{ width: "14px", fontSize: "12px" }}
-                            ></i>
-                            <span
-                              className="text-white fw-semibold"
-                              style={{ fontSize: "13px" }}
-                            >
-                              Role: {employee.role}
-                            </span>
+                        <div className="row">
+                          <div className="col-6">
+                            <div className="d-flex align-items-center">
+                              <i
+                                className="bi bi-telephone-fill text-white me-2"
+                                style={{ width: "14px", fontSize: "12px" }}
+                              ></i>
+                              <span
+                                className="text-white fw-semibold"
+                                style={{ fontSize: "13px" }}
+                              >
+                                {employee.phone}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="col-6">
+                            <div className="d-flex align-items-center">
+                              <i
+                                className="bi bi-gear-fill text-white me-2"
+                                style={{ width: "14px", fontSize: "12px" }}
+                              ></i>
+                              <span
+                                className="text-white fw-semibold"
+                                style={{ fontSize: "13px" }}
+                              >
+                                Role: {employee.role}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -591,8 +632,7 @@ const EmployeesList = () => {
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
         </div>
       </div>
 
@@ -617,7 +657,9 @@ const EmployeesList = () => {
             }}
           >
             <div className="offcanvas-header border-bottom">
-              <h5 className="offcanvas-title fw-bold">Roles &amp; Permissions</h5>
+              <h5 className="offcanvas-title fw-bold">
+                Roles &amp; Permissions
+              </h5>
               <button
                 type="button"
                 className="btn-close"
@@ -653,9 +695,7 @@ const EmployeesList = () => {
                 ></textarea>
               </div>
               <div className="mb-4">
-                <label className="form-label fw-semibold">
-                  Permissions
-                </label>
+                <label className="form-label fw-semibold">Permissions</label>
                 <div className="row">
                   {permissions.map((perm) => (
                     <div className="col-12 col-md-6 mb-2" key={perm.id}>
@@ -678,7 +718,7 @@ const EmployeesList = () => {
                               return {
                                 ...prev,
                                 permission_ids: current.filter(
-                                  (id) => id !== perm.id
+                                  (id) => id !== perm.id,
                                 ),
                               };
                             });
@@ -688,8 +728,7 @@ const EmployeesList = () => {
                           className="form-check-label"
                           htmlFor={`perm-${perm.id}`}
                         >
-                          {perm.label}{" "}
-                          {perm.module ? `(${perm.module})` : ""}
+                          {perm.label} {perm.module ? `(${perm.module})` : ""}
                         </label>
                       </div>
                     </div>
@@ -698,9 +737,7 @@ const EmployeesList = () => {
               </div>
 
               <div className="mb-4">
-                <label className="form-label fw-semibold">
-                  Existing Roles
-                </label>
+                <label className="form-label fw-semibold">Existing Roles</label>
                 <ul className="list-group">
                   {roles.map((role) => (
                     <li
@@ -713,7 +750,7 @@ const EmployeesList = () => {
                           name: role.name,
                           description: role.description || "",
                           permission_ids: (role.permissions || []).map(
-                            (p) => p.id
+                            (p) => p.id,
                           ),
                         })
                       }
@@ -768,12 +805,14 @@ const EmployeesList = () => {
                           const exists = prev.find((r) => r.id === saved.id);
                           if (exists) {
                             return prev.map((r) =>
-                              r.id === saved.id ? saved : r
+                              r.id === saved.id ? saved : r,
                             );
                           }
                           return [...prev, saved];
                         });
-                        toast.success(data.message || "Role saved successfully");
+                        toast.success(
+                          data.message || "Role saved successfully",
+                        );
                       } else {
                         toast.error(data.message || "Failed to save role");
                       }
@@ -834,7 +873,9 @@ const EmployeesList = () => {
                   className="form-control portal-form-hover"
                   placeholder="Enter full name"
                   value={formData.fullName}
-                  onChange={(e) => handleInputChange("fullName", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("fullName", e.target.value)
+                  }
                   required
                 />
               </div>
@@ -854,9 +895,15 @@ const EmployeesList = () => {
                 <input
                   type="password"
                   className="form-control portal-form-hover"
-                  placeholder={formData.id ? "Leave blank to keep current password" : "Enter password"}
+                  placeholder={
+                    formData.id
+                      ? "Leave blank to keep current password"
+                      : "Enter password"
+                  }
                   value={formData.password}
-                  onChange={(e) => handleInputChange("password", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("password", e.target.value)
+                  }
                   required={!formData.id}
                 />
               </div>
@@ -878,7 +925,9 @@ const EmployeesList = () => {
                   className="form-control portal-form-hover"
                   placeholder="Enter location"
                   value={formData.location}
-                  onChange={(e) => handleInputChange("location", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("location", e.target.value)
+                  }
                 />
               </div>
               <div className="mb-3">
@@ -888,9 +937,11 @@ const EmployeesList = () => {
                   value={formData.roleId || ""}
                   onChange={(e) => {
                     handleInputChange("roleId", e.target.value);
-                    const selectedRole = roles.find(r => r.id == e.target.value);
+                    const selectedRole = roles.find(
+                      (r) => r.id == e.target.value,
+                    );
                     if (selectedRole) {
-                        handleInputChange("role", selectedRole.name);
+                      handleInputChange("role", selectedRole.name);
                     }
                   }}
                 >
@@ -909,7 +960,9 @@ const EmployeesList = () => {
                   className="form-control portal-form-hover"
                   placeholder="Enter employee ID (optional)"
                   value={formData.employeeId}
-                  onChange={(e) => handleInputChange("employeeId", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("employeeId", e.target.value)
+                  }
                 />
               </div>
             </form>

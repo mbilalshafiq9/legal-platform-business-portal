@@ -312,12 +312,6 @@ const List = () => {
             });
             
             setChatContacts(transformedChats);
-            
-            // Automatically select the first chat if none is selected
-            if (transformedChats.length > 0 && !selectedChat) {
-              setSelectedChat(transformedChats[0]);
-              setSelectedContact(transformedChats[0]);
-            }
           } else {
             setChatContacts([]);
           }
@@ -902,6 +896,31 @@ const List = () => {
                   </div>
                 </div>
 
+                {/* Search Bar */}
+                <div className="p-4 mb-0">
+                  <div className="position-relative">
+                    <input
+                      type="text"
+                      className="form-control form-control-lg rounded-pill my-lawyers-search-input"
+                      placeholder="Search"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      style={{ paddingRight: "45px" }}
+                    />
+                    <i className="bi bi-search position-absolute top-50 translate-middle-y text-muted fs-4 ms-4"></i>
+                    {searchTerm && (
+                      <button
+                        type="button"
+                        className="btn btn-link position-absolute top-50 end-0 translate-middle-y me-2 p-0"
+                        onClick={() => setSearchTerm("")}
+                        style={{ border: "none", background: "none" }}
+                      >
+                        <i className="bi bi-x-circle text-muted"></i>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
                 {/* Sub Tabs (only for Lawyers tab) */}
                 {activeTab === "lawyers" && (
                   <div className="px-4 pb-3">
@@ -930,31 +949,6 @@ const List = () => {
                   </div>
                 )}
 
-                {/* Search Bar */}
-                <div className="p-4 mb-4">
-                  <div className="position-relative">
-                    <input
-                      type="text"
-                      className="form-control form-control-lg rounded-pill my-lawyers-search-input"
-                      placeholder="Search"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      style={{ paddingRight: "45px" }}
-                    />
-                    <i className="bi bi-search position-absolute top-50 translate-middle-y text-muted fs-4 ms-4"></i>
-                    {searchTerm && (
-                      <button
-                        type="button"
-                        className="btn btn-link position-absolute top-50 end-0 translate-middle-y me-2 p-0"
-                        onClick={() => setSearchTerm("")}
-                        style={{ border: "none", background: "none" }}
-                      >
-                        <i className="bi bi-x-circle text-muted"></i>
-                      </button>
-                    )}
-                  </div>
-                </div>
-
                 {/* Contact List */}
                 <div
                   className={`flex-fill overflow-auto d-flex justify-content-start align-items-center flex-column ${
@@ -980,7 +974,8 @@ const List = () => {
                     <div
                       key={item.id || item.chatId}
                       className={`p-3 cursor-pointer mb-3 my-lawyers-contact-card portal-card-hover ${
-                        selectedContact?.chatId === item.chatId || selectedContact?.id === item.id
+                        (selectedContact?.chatId && item.chatId && selectedContact.chatId === item.chatId) || 
+                        (selectedContact?.id === item.id)
                           ? "my-lawyers-contact-card-active"
                           : "bg-white"
                       }`}
@@ -1092,41 +1087,38 @@ const List = () => {
             </div>
 
             {/* Right Panel - Chat Interface */}
-            <div className={`col-lg-8 col-md-7 d-flex flex-column my-lawyers-right-panel ${selectedContact ? 'col-12' : ''}`}>
+            <div className={`col-lg-8 col-md-7 flex-column my-lawyers-right-panel ${selectedContact ? 'd-flex col-12' : 'd-none d-md-flex'}`}>
               {selectedContact ? (
                 // Chat Interface - Only show when contact is selected
                 <>
                   {/* Conversation Header */}
                   <div className="p-4 bg-white my-lawyers-conversation-header">
                     <div className="d-flex justify-content-between align-items-center">
-                      <Link to={`/lawyers?id=${selectedContact.lawyerId}`} className="text-decoration-none">
-                        <div className="d-flex align-items-center">
-                          {/* Mobile Back Button */}
-                          <button 
-                            className="btn btn-sm d-lg-none me-3"
-                            onClick={() => setSelectedContact(null)}
-                          >
-                            <i className="bi bi-arrow-left"></i>
-                          </button>
-                          <div className="symbol symbol-40px me-3">
-                            <img
-                              src={selectedContact.avatar}
-                              alt={selectedContact.name}
-                              className="rounded-circle my-lawyers-avatar-40"
-                            />
-                          </div>
-                          <div>
-                            <h6 className="mb-0 fw-bold text-dark">
-                              {selectedContact.name}
-                            </h6>
-                            <small className="text-muted">
-                              {activeTab === "chats"
-                                ? "Lawyer"
-                                : `${selectedContact.title || "Lawyer"}`}
-                            </small>
-                          </div>
+                      <div className="d-flex align-items-center">
+                        <button 
+                          className="btn btn-sm d-lg-none me-3"
+                          onClick={() => setSelectedContact(null)}
+                        >
+                          <i className="bi bi-arrow-left"></i>
+                        </button>
+                        <div className="symbol symbol-40px me-3">
+                          <img
+                            src={selectedContact.avatar}
+                            alt={selectedContact.name}
+                            className="rounded-circle my-lawyers-avatar-40"
+                          />
                         </div>
-                      </Link>
+                        <div>
+                          <h6 className="mb-0 fw-bold text-dark">
+                            {selectedContact.name}
+                          </h6>
+                          <small className="text-muted">
+                            {activeTab === "chats"
+                              ? "Lawyer"
+                              : `${selectedContact.title || "Lawyer"}`}
+                          </small>
+                        </div>
+                      </div>
                       {/* <div className="d-flex gap-2">
                         <button className="btn btn-sm">
                           <i className="bi bi-search"></i>
@@ -1176,10 +1168,10 @@ const List = () => {
                               </div>
                             </div>
                             <div
-                              className={`p-3 rounded-3 my-lawyers-message-bubble ${
+                              className={`p-3 my-lawyers-message-bubble ${
                                 message.isFromUser
-                                  ? "bg-dark text-white"
-                                  : "bg-white text-dark"
+                                  ? "bg-dark text-white my-lawyers-message-bubble-outgoing"
+                                  : "bg-white text-dark my-lawyers-message-bubble-incoming"
                               }`}
                             >
                               {/* Display file if present */}

@@ -216,13 +216,13 @@ const HelpSupport = () => {
           <div className="col-12 col-md-8 offset-md-2">
                 <div className="contact-support-card">
               <div className="d-flex justify-content-center align-items-center gap-5">
-                <div 
+                {/* <div 
                   className="contact-support-icon" 
                   style={{ cursor: "pointer" }}
                   onClick={handleEmailIconClick}
                 >
                   <i className="bi bi-envelope-fill"></i>
-                </div>
+                </div> */}
                 <div 
                   className="contact-support-icon" 
                   style={{ cursor: "pointer" }}

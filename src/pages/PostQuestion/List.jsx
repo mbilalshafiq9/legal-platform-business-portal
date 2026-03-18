@@ -3,10 +3,11 @@ import { NavLink } from "react-router-dom";
 import { toast } from "react-toastify";
 import ApiService from "../../services/ApiService";
 import notificationProfile from "../../assets/images/notification-profile.png";
-import NoQuestion from "../../assets/images/NoQuestion.png";
+import NoQuestion from "../../assets/images/postegalIssue-img.png";
 import PaymentModal from "../../components/PaymentModal";
 import AskQuestionOffcanvas from "../../components/AskQuestionOffcanvas";
 import "../../assets/css/siri-border-animation.css";
+import "./PostQuestionList.css";
 
 const List = () => {
   // Load data from localStorage
@@ -648,7 +649,7 @@ const List = () => {
           style={{ marginTop: "-20px" }}
           data-aos="fade-up"
         >
-          <div className="flex-fill" style={{ maxWidth: "40%" }}>
+          <div className="flex-fill post-question-search-container" style={{ maxWidth: "40%" }}>
             <div className="position-relative">
               <input
                 type="text"
@@ -672,7 +673,7 @@ const List = () => {
             </div>
           </div>
 
-          <div className="d-flex gap-3 flex-wrap flex-md-nowrap">
+          <div className="d-flex gap-3 flex-wrap flex-md-nowrap post-question-add-btn-container">
             {/* <button
               className="btn btn-transparent border rounded-pill d-flex align-items-center gap-2 portal-button-hover"
               style={{ borderRadius: "12px", minWidth: "120px" }}

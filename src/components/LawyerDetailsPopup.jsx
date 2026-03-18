@@ -262,8 +262,7 @@ const LawyerDetailsPopup = ({
               </div>
             )}
 
-            <div className="d-flex justify-content-between align-items-center mb-3 px-3 lawyer-card-title">
-              <div className="">
+            <div className="d-flex justify-content-between align-items-center mb-3 px-3 lawyer-card-title w-100">
                  <h1 className="fw-bold text-dark mb-0">
                   {lawyerDetails?.name || lawyerDetails?.firm_name || ""}
                 </h1>
@@ -280,7 +279,6 @@ const LawyerDetailsPopup = ({
                   </div>
                 )}
                 </div>
-              </div>
             </div>
 
             {(lawyerDetails?.about || lawyerDetails?.description) && (
@@ -299,7 +297,7 @@ const LawyerDetailsPopup = ({
                   ).map(j => j.name).join(", ")}
                   {lawyerDetails.jurisdictions.length > 5 && (
                     <span 
-                      className="text-primary ms-2 fw-bold" 
+                      className="text-black ms-2 fw-bold" 
                       onClick={() => setShowAllJurisdictions(!showAllJurisdictions)}
                       style={{ cursor: "pointer" }}
                     >
@@ -328,7 +326,7 @@ const LawyerDetailsPopup = ({
                         {displayExpertise.map(e => e.name).join(", ")}
                         {allExpertise.length > 5 && (
                           <span 
-                            className="text-primary ms-2 fw-bold" 
+                            className="text-black ms-2 fw-bold" 
                             onClick={() => setShowAllExpertise(!showAllExpertise)}
                             style={{ cursor: "pointer" }}
                           >

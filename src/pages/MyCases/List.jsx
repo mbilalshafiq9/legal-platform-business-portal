@@ -4,6 +4,8 @@ import notificationProfile from "../../assets/images/notification-profile.png";
 import { toast } from "react-toastify";
 import ApiService from "../../services/ApiService";
 import CreateCaseModal from "../../components/CreateCaseModal";
+import NoCaseImg from "../../assets/images/my-case-img.png";
+import "./MyCasesList.css";
 
 const List = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -88,9 +90,9 @@ const List = () => {
               marginTop: "30px",
             }} data-aos="fade-up">
         <div className="col-12 px-0">
-          <div className="d-lg-flex gap-3 align-items-center">
+          <div className="d-lg-flex gap-3 align-items-center my-cases-header-container">
             {/* Search Bar */}
-            <div className="position-relative flex-grow-1" style={{ maxWidth: "400px" }}>
+            <div className="position-relative flex-grow-1 my-cases-search-container" style={{ maxWidth: "400px" }}>
               <input
                 type="text"
                 className="form-control form-control-lg rounded-pill portal-form-hover"
@@ -120,7 +122,7 @@ const List = () => {
               onClick={() => setShowCreateCase(true)}
             >
               <div
-                className="rounded-circle d-flex align-items-center justify-content-center"
+                className="rounded-circle d-flex align-items-center justify-content-center my-cases-plus-icon-container"
                 style={{
                   backgroundColor: "#f8f9fa",
                 }}
@@ -144,6 +146,9 @@ const List = () => {
         ) : cases.length === 0 ? (
           <div className="col-12 d-flex justify-content-center align-items-center" style={{ minHeight: "400px" }}>
             <div className="text-center">
+              <div className="mb-4">
+                <img src={NoCaseImg} alt="No Case" style={{ maxWidth: "200px", height: "auto" }} />
+              </div>
               <h4 className="text-muted mb-2">No Cases Found</h4>
               <p className="text-muted">You don't have any cases yet.</p>
             </div>
