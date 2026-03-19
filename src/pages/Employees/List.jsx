@@ -360,7 +360,7 @@ const EmployeesList = () => {
                   color: "#000000",
                 }}
               >
-                <i className="bi bi-sliders"></i>
+                <i className="bi bi-sliders text-black"></i>
                 {selectedRole === "All" ? "Filter" : `Role: ${selectedRole}`}
               </Dropdown.Toggle>
 
