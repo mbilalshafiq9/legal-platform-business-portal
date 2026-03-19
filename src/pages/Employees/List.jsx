@@ -50,6 +50,7 @@ const EmployeesList = () => {
   const [searchTerm, setSearchTerm] = useState(
     loadFromLocalStorage("employees_searchTerm", ""),
   );
+  const [selectedRole, setSelectedRole] = useState("All");
   const [showAddEmployee, setShowAddEmployee] = useState(false);
   const navigate = useNavigate();
 
@@ -147,9 +148,10 @@ const EmployeesList = () => {
 
   const filteredEmployees = employees.filter(
     (employee) =>
-      employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.location.toLowerCase().includes(searchTerm.toLowerCase()),
+      (selectedRole === "All" || employee.role === selectedRole) &&
+      (employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        employee.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        employee.location.toLowerCase().includes(searchTerm.toLowerCase())),
   );
 
   const handleEmployeeClick = (employeeId) => {
@@ -346,20 +348,31 @@ const EmployeesList = () => {
               />
             </div>
 
-            <button
-              className="btn btn-white px-4 py-3 d-flex align-items-center gap-2 employees-filter-button"
-              style={{
-                borderRadius: "50px",
-                border: "1px solid #e0e0e0",
-                fontSize: "14px",
-                fontWeight: "500",
-                backgroundColor: "#ffffff",
-                color: "#000000",
-              }}
-            >
-              <i className="bi bi-sliders"></i>
-              Filter
-            </button>
+            <Dropdown>
+              <Dropdown.Toggle
+                className="btn btn-white px-4 py-3 d-flex align-items-center gap-2 employees-filter-button employees-filter-button-hover-fix"
+                style={{
+                  borderRadius: "50px",
+                  border: "1px solid #e0e0e0",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  backgroundColor: "#ffffff",
+                  color: "#000000",
+                }}
+              >
+                <i className="bi bi-sliders"></i>
+                {selectedRole === "All" ? "Filter" : `Role: ${selectedRole}`}
+              </Dropdown.Toggle>
+
+              <Dropdown.Menu style={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 40px rgba(0,0,0,0.1)" }}>
+                <Dropdown.Item onClick={() => setSelectedRole("All")}>All Roles</Dropdown.Item>
+                {roles.map((role) => (
+                  <Dropdown.Item key={role.id} onClick={() => setSelectedRole(role.name)}>
+                    {role.name}
+                  </Dropdown.Item>
+                ))}
+              </Dropdown.Menu>
+            </Dropdown>
 
             <div className="d-flex gap-2">
               <button
