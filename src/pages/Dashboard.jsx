@@ -382,7 +382,7 @@ const Dashboard = () => {
                   </NavLink>
                   <div className="row">
                     {/* Recent Posted Question Section */}
-                    <div className="col-lg-7 col-md-12 mb-4 mb-lg-0 border-end">
+                    <div className="col-lg-7 col-md-12 mb-4 mb-lg-0">
                       <div className="d-flex justify-content-between align-items-center mb-4">
                         <h1 className="fw-bold text-dark mb-0">
                           Recent Posted Question

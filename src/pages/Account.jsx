@@ -468,33 +468,37 @@ const handle2FAToggle = async () => {
                                         </div>
                                       )}
                                     </div>
-                                    {/* <div className="contact-info-item">
-                                      <h6 className="contact-label">Website</h6>
-                                      {isEditMode ? (
-                                        <input
-                                          type="text"
-                                          className="form-control form-control-solid"
-                                          value={profileData.website || profile?.business_info?.website || ''}
-                                          onChange={(e) => setProfileData({ ...profileData, website: e.target.value })}
-                                        />
-                                      ) : (
-                                        <p className="contact-value">{profile?.business_info?.website}</p>
-                                      )}
-                                    </div>
-                                    <div className="contact-info-item">
-                                      <h6 className="contact-label">Company Trade License</h6>
-                                      {isEditMode ? (
-                                        <input
-                                          type="file"
-                                          className="form-control form-control-solid"
-                                          onChange={(e) => setTradeLicenseFile(e.target.files?.[0])}
-                                        />
-                                      ) : (
-                                        <div className="license-image-container">
-                                          <img src={profile?.business_info?.trade_license || licenseImg} alt="Trade License" className="license-image" />
+                                    {!teamId && (
+                                      <>
+                                        <div className="contact-info-item">
+                                          <h6 className="contact-label">Website</h6>
+                                          {isEditMode ? (
+                                            <input
+                                              type="text"
+                                              className="form-control form-control-solid"
+                                              value={profileData.website || profile?.business_info?.website || ''}
+                                              onChange={(e) => setProfileData({ ...profileData, website: e.target.value })}
+                                            />
+                                          ) : (
+                                            <p className="contact-value">{profile?.business_info?.website}</p>
+                                          )}
                                         </div>
-                                      )}
-                                    </div> */}
+                                        <div className="contact-info-item">
+                                          <h6 className="contact-label">Company Trade License</h6>
+                                          {isEditMode ? (
+                                            <input
+                                              type="file"
+                                              className="form-control form-control-solid"
+                                              onChange={(e) => setTradeLicenseFile(e.target.files?.[0])}
+                                            />
+                                          ) : (
+                                            <div className="license-image-container">
+                                              <img src={profile?.business_info?.trade_license || licenseImg} alt="Trade License" className="license-image" />
+                                            </div>
+                                          )}
+                                        </div>
+                                      </>
+                                    )}
                                   </div>
                                 </div>
 
