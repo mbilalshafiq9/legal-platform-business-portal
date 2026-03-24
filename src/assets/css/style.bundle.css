@@ -63379,7 +63379,9 @@ html {
 }
 
 /* Employees Button Hover Fixes */
-.employees-filter-button {
+.employees-filter-button,
+.employees-add-button,
+.employees-roles-button {
     transition: all 0.3s ease;
     background-color: #ffffff !important;
     color: #000000 !important;
@@ -63389,7 +63391,13 @@ html {
 .employees-filter-button:hover,
 .employees-filter-button:focus,
 .employees-filter-button:active,
-.show > .employees-filter-button.dropdown-toggle {
+.show > .employees-filter-button,
+.employees-add-button:hover,
+.employees-add-button:focus,
+.employees-add-button:active,
+.employees-roles-button:hover,
+.employees-roles-button:focus,
+.employees-roles-button:active {
     background-color: #000000 !important;
     color: #ffffff !important;
     border-color: #000000 !important;
@@ -63400,7 +63408,13 @@ html {
 .employees-filter-button:hover i,
 .employees-filter-button:focus i,
 .employees-filter-button:active i,
-.show > .employees-filter-button.dropdown-toggle i {
+.show > .employees-filter-button i,
+.employees-add-button:hover i,
+.employees-add-button:focus i,
+.employees-add-button:active i,
+.employees-roles-button:hover i,
+.employees-roles-button:focus i,
+.employees-roles-button:active i {
     color: #ffffff !important;
 }
 
@@ -63415,17 +63429,6 @@ html {
 /* Ensure the arrow is removed from the toggle if it exists */
 .employees-filter-button::after {
     display: none !important;
-}
-
-.employees-add-button:hover {
-    background-color: #000000 !important;
-    color: #ffffff !important;
-    border-color: #000000 !important;
-    transform: none !important;
-}
-
-.employees-add-button:hover i {
-    color: #ffffff !important;
 }
 
 button.employees-add-button-hover-fix:hover {

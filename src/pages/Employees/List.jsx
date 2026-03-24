@@ -65,6 +65,7 @@ const EmployeesList = () => {
     roleId: "",
     employeeId: "",
     password: "",
+    picture: null,
   });
 
   const [employees, setEmployees] = useState(
@@ -110,7 +111,7 @@ const EmployeesList = () => {
           phone: t.phone || "",
           role: t.role || "Not specified",
           roleId: t.role_id || "",
-          profileImage: notificationProfile,
+          profileImage: t.picture || notificationProfile,
           permissions: t.permissions || [],
         }));
         setEmployees(mapped);
@@ -228,26 +229,34 @@ const EmployeesList = () => {
         ? (selectedRole.permissions || []).map((p) => p.id)
         : [];
 
-      const payload = {
-        name: formData.fullName.trim(),
-        email: formData.email.trim(),
-        phone: formData.phone.trim(),
-        location: formData.location.trim() || "",
-        employee_code: employeeId,
-        role: selectedRole ? selectedRole.name : formData.role,
-        role_id: formData.roleId || null,
-        permissions: selectedPermissions,
-        password: formData.password,
-      };
+      const apiData = new FormData();
+      apiData.append("name", formData.fullName.trim());
+      apiData.append("email", formData.email.trim());
+      apiData.append("phone", formData.phone.trim());
+      apiData.append("location", formData.location.trim() || "");
+      apiData.append("employee_code", employeeId);
+      apiData.append("role", selectedRole ? selectedRole.name : formData.role);
+      apiData.append("role_id", formData.roleId || "");
+      // Append permissions as an array for FormData
+      if (selectedPermissions && selectedPermissions.length > 0) {
+        selectedPermissions.forEach((permissionId) => {
+          apiData.append("permissions[]", permissionId);
+        });
+      }
+      apiData.append("password", formData.password);
 
       if (formData.id) {
-        payload.id = formData.id;
+        apiData.append("id", formData.id);
+      }
+
+      if (formData.picture) {
+        apiData.append("picture", formData.picture);
       }
 
       const response = await ApiService.request({
         method: "POST",
         url: "saveTeam",
-        data: payload,
+        data: apiData,
       });
       const data = response.data;
       if (data.status && data.data && data.data.team) {
@@ -261,7 +270,7 @@ const EmployeesList = () => {
           phone: t.phone || "",
           role: t.role || "Not specified",
           roleId: t.role_id || "",
-          profileImage: notificationProfile,
+          profileImage: t.picture || notificationProfile,
           permissions: t.permissions || [],
         };
 
@@ -350,17 +359,26 @@ const EmployeesList = () => {
 
             <Dropdown>
               <Dropdown.Toggle
-                className="btn btn-white px-4 py-3 d-flex align-items-center gap-2 employees-filter-button employees-filter-button-hover-fix"
-                style={{
-                  borderRadius: "50px",
-                  border: "1px solid #e0e0e0",
-                  fontSize: "14px",
-                  fontWeight: "500",
-                  backgroundColor: "#ffffff",
-                  color: "#000000",
-                }}
+                as={React.forwardRef(({ children, onClick }, ref) => (
+                  <button
+                    ref={ref}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onClick(e);
+                    }}
+                    className="btn px-4 py-3 d-flex align-items-center gap-2 employees-filter-button employees-filter-button-hover-fix"
+                    style={{
+                      borderRadius: "50px",
+                      border: "1px solid #e0e0e0",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                    }}
+                  >
+                    {children}
+                  </button>
+                ))}
               >
-                <i className="bi bi-sliders text-black"></i>
+                <i className="bi bi-sliders"></i>
                 {selectedRole === "All" ? "Filter" : `Role: ${selectedRole}`}
               </Dropdown.Toggle>
 
@@ -376,14 +394,12 @@ const EmployeesList = () => {
 
             <div className="d-flex gap-2">
               <button
-                className="btn btn-white px-4 py-3 d-flex align-items-center gap-2 employees-add-button employees-add-button-hover-fix"
+                className="btn px-4 py-3 d-flex align-items-center gap-2 employees-add-button employees-add-button-hover-fix"
                 style={{
                   borderRadius: "50px",
                   border: "none",
                   fontSize: "14px",
                   fontWeight: "500",
-                  backgroundColor: "#ffffff",
-                  color: "#000000",
                 }}
                 onClick={() => {
                   setFormData({
@@ -404,7 +420,7 @@ const EmployeesList = () => {
                 Add New Team
               </button>
               <button
-                className="btn btn-outline-dark px-4 py-3 d-flex align-items-center gap-2"
+                className="btn px-4 py-3 d-flex align-items-center gap-2 employees-roles-button employees-roles-button-hover-fix"
                 style={{
                   borderRadius: "50px",
                   fontSize: "14px",
@@ -424,7 +440,7 @@ const EmployeesList = () => {
       </div>
 
       <div className="container-fluid px-4 py-4">
-        {/* Employees Grid */}
+        {/* Employees */}
         <div className="row">
           {loading && (
             <div
@@ -975,6 +991,16 @@ const EmployeesList = () => {
                   value={formData.employeeId}
                   onChange={(e) =>
                     handleInputChange("employeeId", e.target.value)
+                  }
+                />
+              </div>
+              <div className="mb-3">
+                <label className="form-label fw-semibold">Image</label>
+                <input
+                  type="file"
+                  className="form-control portal-form-hover"
+                  onChange={(e) =>
+                    handleInputChange("picture", e.target.files[0])
                   }
                 />
               </div>

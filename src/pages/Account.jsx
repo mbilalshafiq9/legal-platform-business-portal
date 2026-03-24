@@ -2,38 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
 import ApiService from "../services/ApiService";
 import Loader from "../components/Loader"; 
-import circle from "../assets/images/yellow-circle.png";
 import licenseImg from "../assets/images/lisence-img.png";
+import AuthService from '../services/AuthService';
+
 import "./Employees/detail.css";
 
 const Account = () => {
-  const user = (() => {
-    try {
-      const userStr = localStorage.getItem('loggedUser');
-      if (userStr && userStr !== 'undefined' && userStr.startsWith('{')) {
-        return JSON.parse(userStr);
-      }
-    } catch (e) {
-      console.error("Error parsing admin in Account", e);
-    }
-    return null;
-  })();
-
-  // Load data from localStorage
-  const loadFromLocalStorage = (key, defaultValue) => {
-    try {
-      const saved = localStorage.getItem(key);
-      if (saved && saved !== 'undefined') {
-        if (saved.startsWith('{') || saved.startsWith('[') || saved.startsWith('"')) {
-          return JSON.parse(saved);
-        }
-        return saved;
-      }
-    } catch (error) {
-      console.error(`Error loading ${key} from localStorage:`, error);
-    }
-    return defaultValue;
-  };
+  const currentUser = AuthService.getCurrentUser();
+  const teamId = currentUser?.is_team_member ? currentUser.id : null;
+  const [profile, setProfile] = useState(null);
 
   const toBase64 = file => new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -42,57 +19,59 @@ const Account = () => {
     reader.onerror = error => reject(error);
   });
 
-  const [tab, setTab] = useState(loadFromLocalStorage("account_tab", "profile"));
-  const [name, setName] = useState(loadFromLocalStorage("account_name", user?.name || ""));
+  const [tab, setTab] = useState("profile");
   const [pictureFile, setPictureFile] = useState(null);
-  const [picturePreview, setPicturePreview] = useState(user?.picture || "");
-  const [email, setEmail] = useState(loadFromLocalStorage("account_email", user?.email || ""));
-  const [otp, setOtp] = useState(loadFromLocalStorage("account_emailOtp", ""));
-  const [oldPassword, setOldPassword] = useState(loadFromLocalStorage("account_oldPassword", ""));
-  const [newPassword, setNewPassword] = useState(loadFromLocalStorage("account_newPassword", ""));
-  const [confirmPassword, setConfirmPassword] = useState(loadFromLocalStorage("account_confirmPassword", ""));
+  const [picturePreview, setPicturePreview] = useState("");
+  const [otp, setOtp] = useState("");
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [tradeLicenseFile, setTradeLicenseFile] = useState(null);
-  const [is2FAEnabled, setIs2FAEnabled] = useState(user?.is_2fa_enabled === 1 || user?.is_2fa_enabled === true);
-  const [isLoader, setIsLoader] = useState(false);
+  const [is2FAEnabled, setIs2FAEnabled] = useState(false);
+  const [isLoader, setIsLoader] = useState(true);
   const [isEditMode, setIsEditMode] = useState(false);
   const [profileData, setProfileData] = useState({
-    name: user?.name || "",
-    email: user?.email || "",
-    phone: user?.phone || "",
-    website: user?.business_info?.website || "",
+    name: "",
+    email: "",
+    phone: "",
+    website: "",
   });
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const fileInputRef = useRef(null);
 
-  // Keep form fields in sync if logged user changes elsewhere
   useEffect(() => {
-    try {
-      const userStr = localStorage.getItem('loggedUser');
-      if (userStr && userStr !== 'undefined' && userStr.startsWith('{')) {
-        const parsed = JSON.parse(userStr);
-        setName((prev) => prev || parsed?.name || "");
-        setEmail((prev) => prev || parsed?.email || "");
-        setPicturePreview((prev) => prev || parsed?.picture || "");
-        setIs2FAEnabled(parsed?.is_2fa_enabled === 1 || parsed?.is_2fa_enabled === true);
+    const fetchProfile = async () => {
+      try {
+        setIsLoader(true);
+        const response = await ApiService.request({
+          method: "GET",
+          url: teamId ? `getProfile?team_id=${teamId}` : "getProfile",
+        });
+        if (response.data && response.data.status) {
+          const profileDataFromApi = response.data.data;
+          setProfile(profileDataFromApi);
+          setProfileData({
+            name: profileDataFromApi.name || "",
+            email: profileDataFromApi.email || "",
+            phone: profileDataFromApi.phone || "",
+            website: profileDataFromApi.business_info?.website || "",
+          });
+          setPicturePreview(profileDataFromApi.picture || "");
+          setIs2FAEnabled(profileDataFromApi.is_2fa_enabled === 1 || profileDataFromApi.is_2fa_enabled === true);
+        } else {
+          toast.error(response.data.message || "Failed to fetch profile data.");
+        }
+      } catch (error) {
+        console.error("Error fetching profile", error);
+        toast.error("An error occurred while fetching your profile.");
+      } finally {
+        setIsLoader(false);
       }
-    } catch {}
-  }, []);
+    };
 
-  // Save account data to localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem("account_tab", JSON.stringify(tab));
-      localStorage.setItem("account_name", JSON.stringify(name));
-      localStorage.setItem("account_email", JSON.stringify(email));
-      localStorage.setItem("account_emailOtp", JSON.stringify(otp));
-      localStorage.setItem("account_oldPassword", JSON.stringify(oldPassword));
-      localStorage.setItem("account_newPassword", JSON.stringify(newPassword));
-      localStorage.setItem("account_confirmPassword", JSON.stringify(confirmPassword));
-    } catch (error) {
-      console.error("Error saving account data to localStorage:", error);
-    }
-  }, [tab, name, email, otp, oldPassword, newPassword, confirmPassword]);
+    fetchProfile();
+  }, []);
 
 
 const handleSubmit = async (e) => {
@@ -105,9 +84,12 @@ const handleSubmit = async (e) => {
           "new_password": newPassword,
           "confirm_password": confirmPassword,
         };
+        if (teamId) {
+          formData.team_id = teamId;
+        }
         const response = await ApiService.request({
           method: "POST",
-          url: "updateAccount",
+          url: "update-profile",
           data: formData
         });
         const data = response.data;
@@ -136,22 +118,25 @@ const handleSubmit = async (e) => {
 };
 
 const handleProfileUpdate = async () => {
-  if (profileData.email !== user?.email && !isEmailVerified) {
+  if (profileData.email !== profile?.email && !isEmailVerified) {
     toast.error("Please verify your new email first");
     return;
   }
   try {
     const fd = new FormData();
-    fd.append("name", profileData.name || user?.name);
-    fd.append("email", profileData.email || user?.email);
-    fd.append("phone", profileData.phone || user?.phone);
-    fd.append("website", profileData.website || user?.website);
+    fd.append("name", profileData.name || profile?.name);
+    fd.append("email", profileData.email || profile?.email);
+    fd.append("phone", profileData.phone || profile?.phone);
+    fd.append("website", profileData.website || profile?.website);
 
     if (pictureFile) {
       fd.append("picture", pictureFile);
     }
     if (tradeLicenseFile) {
       fd.append("trade_license", tradeLicenseFile);
+    }
+    if (teamId) {
+      fd.append("team_id", teamId);
     }
     const response = await ApiService.request({
       method: "POST",
@@ -161,20 +146,20 @@ const handleProfileUpdate = async () => {
     });
     const data = response.data;
     if (data.status) {
-      let tradeLicenseData = user?.business_info?.trade_license;
+      let tradeLicenseData = profile?.business_info?.trade_license;
       if (tradeLicenseFile) {
         tradeLicenseData = await toBase64(tradeLicenseFile);
       }
 
       const updated = { 
-        ...(user || {}), 
-        name: profileData.name || user?.name,
-        email: profileData.email || user?.email,
-        phone: profileData.phone || user?.phone,
-        website: profileData.website || user?.website,
+        ...(profile || {}), 
+        name: profileData.name || profile?.name,
+        email: profileData.email || profile?.email,
+        phone: profileData.phone || profile?.phone,
+        website: profileData.website || profile?.website,
         picture: picturePreview,
         business_info: {
-          ...(user?.business_info || {}),
+          ...(profile?.business_info || {}),
           trade_license: tradeLicenseData
         }
       };
@@ -198,10 +183,14 @@ const handleSendEmailOtp = async (targetEmail) => {
     return;
   }
   try {
+    const apiData = { email: targetEmail, update_profile: true, userId: profile?.id };
+    if (teamId) {
+      apiData.team_id = teamId;
+    }
     const response = await ApiService.request({
       method: "POST",
       url: "resendOTP",
-      data: { email: targetEmail, update_profile: true, userId: user?.id }
+      data: apiData
     });
     const data = response.data;
     if (data.status) {
@@ -221,10 +210,14 @@ const handleVerifyAndUpdateEmail = async (targetEmail) => {
     return;
   }
   try {
+    const apiData = { email: profileData.email, otp: otp, update_profile: true };
+    if (teamId) {
+      apiData.team_id = teamId;
+    }
     const verify = await ApiService.request({
       method: "POST",
       url: "verifyOTP",
-      data: { email: email, otp: otp, update_profile: true }
+      data: apiData
     });
     const v = verify.data;
     if (!v.status) {
@@ -243,6 +236,9 @@ const handle2FAToggle = async () => {
   try {
     const fd = new FormData();
     fd.append("is_2fa_enabled", newValue ? 1 : 0);
+    if (teamId) {
+      fd.append("team_id", teamId);
+    }
     const response = await ApiService.request({
       method: "POST",
       url: "update-profile",
@@ -252,7 +248,7 @@ const handle2FAToggle = async () => {
     const data = response.data;
     if (data.status) {
       setIs2FAEnabled(newValue);
-      const updated = { ...(user || {}), is_2fa_enabled: newValue ? 1 : 0 };
+      const updated = { ...(profile || {}), is_2fa_enabled: newValue ? 1 : 0 };
       localStorage.setItem('loggedUser', JSON.stringify(updated));
       toast.success(newValue ? "2FA Enabled" : "2FA Disabled");
     } else {
@@ -348,9 +344,9 @@ const handle2FAToggle = async () => {
                                       title="Click to update profile picture"
                                     >
                                       <img
-                                        src={picturePreview || user?.picture || circle}
+                                        src={picturePreview || profile?.picture || ''}
                                         alt="Profile"
-                                        className={`profile-image ${!(picturePreview || user?.picture) ? 'noon-logo' : 'user-photo'}`}
+                                        className={`profile-image ${!(picturePreview || profile?.picture) ? 'noon-logo' : 'user-photo'}`}
                                       />
                                       <div className="edit-image-icon">
                                         <i className="bi bi-camera-fill fs-2"></i>
@@ -376,11 +372,11 @@ const handle2FAToggle = async () => {
                                         <input
                                           type="text"
                                           className="form-control form-control-solid mb-2"
-                                          value={profileData.name || user?.name || ''}
+                                          value={profileData.name || profile?.name || ''}
                                           onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
                                         />
                                       ) : (
-                                        <h2 className="company-name">{user?.name || "Noon"}</h2>
+                                        <h2 className="company-name">{profile?.name}</h2>
                                       )}
                                     </div>
                                     <div className="edit-button-wrapper">
@@ -411,14 +407,14 @@ const handle2FAToggle = async () => {
                                             <input
                                               type="email"
                                               className="form-control form-control-solid"
-                                              value={profileData.email || ""}
+                                              value={profileData.email || profile?.email || ''}
                                               onChange={(e) => {
                                                 setProfileData({ ...profileData, email: e.target.value });
                                                 setIsEmailVerified(false);
                                                 setIsOtpSent(false);
                                               }}
                                             />
-                                            {profileData.email !== user?.email && !isEmailVerified && (
+                                            {profileData.email !== profile?.email && !isEmailVerified && (
                                               <button
                                                 type="button"
                                                 className="btn rounded-pill fw-bold otp-btn"
@@ -453,7 +449,7 @@ const handle2FAToggle = async () => {
                                           )}
                                         </>
                                       ) : (
-                                        <p className="contact-value">{user?.email || "noon@shopping.com"}</p>
+                                        <p className="contact-value">{profile?.email}</p>
                                       )}
                                     </div>
                                     <div className="contact-info-item">
@@ -462,27 +458,27 @@ const handle2FAToggle = async () => {
                                         <input
                                           type="text"
                                           className="form-control form-control-solid"
-                                          value={profileData.phone || user?.phone || ''}
+                                          value={profileData.phone || profile?.phone || ''}
                                           onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
                                         />
                                       ) : (
                                         <div className="d-flex align-items-center gap-2">
                                           <img src="https://flagcdn.com/w20/ae.png" alt="UAE Flag" width="20" height="15" />
-                                          <p className="contact-value mb-0">{user?.phone || "+971 24 836 9057"}</p>
+                                          <p className="contact-value mb-0">{profile?.phone}</p>
                                         </div>
                                       )}
                                     </div>
-                                    <div className="contact-info-item">
+                                    {/* <div className="contact-info-item">
                                       <h6 className="contact-label">Website</h6>
                                       {isEditMode ? (
                                         <input
                                           type="text"
                                           className="form-control form-control-solid"
-                                          value={profileData.website || user?.website || ''}
+                                          value={profileData.website || profile?.business_info?.website || ''}
                                           onChange={(e) => setProfileData({ ...profileData, website: e.target.value })}
                                         />
                                       ) : (
-                                        <p className="contact-value">{user?.website || "noon.com"}</p>
+                                        <p className="contact-value">{profile?.business_info?.website}</p>
                                       )}
                                     </div>
                                     <div className="contact-info-item">
@@ -495,10 +491,10 @@ const handle2FAToggle = async () => {
                                         />
                                       ) : (
                                         <div className="license-image-container">
-                                          <img src={user?.business_info?.trade_license || licenseImg} alt="Trade License" className="license-image" />
+                                          <img src={profile?.business_info?.trade_license || licenseImg} alt="Trade License" className="license-image" />
                                         </div>
                                       )}
-                                    </div>
+                                    </div> */}
                                   </div>
                                 </div>
 

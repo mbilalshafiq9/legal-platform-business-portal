@@ -1372,7 +1372,8 @@ body.dark-mode .dashboard-moon-icon {
 /* Base styles: white background, black text, no border, equal dimensions */
 body.dark-mode .btn.bg-black.text-white.rounded-pill,
 body.dark-mode .my-cases-add-button,
-body.dark-mode .employees-add-button {
+body.dark-mode .employees-add-button,
+body.dark-mode .employees-roles-button {
   background-color: #ffffff !important;
   color: #000000 !important;
   border: none !important;
@@ -1441,7 +1442,8 @@ body.dark-mode .employees-add-button {
 }
 
 /* Override icon color on hover */
-.employees-add-button:hover i {
+body.dark-mode .employees-add-button:hover i,
+body.dark-mode .employees-roles-button:hover i {
   color: #ffffff !important;
 }
 
@@ -1466,6 +1468,7 @@ body.dark-mode .employees-add-button {
 body.dark-mode .btn.bg-black.text-white.rounded-pill:hover,
 body.dark-mode .my-cases-add-button:hover,
 body.dark-mode .employees-add-button:hover,
+body.dark-mode .employees-roles-button:hover,
 body.dark-mode .btn.btn-white.employees-add-button:hover,
 body.dark-mode .btn-white.employees-add-button:hover {
   background-color: #000000 !important;

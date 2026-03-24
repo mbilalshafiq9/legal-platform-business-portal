@@ -73,6 +73,7 @@ class AuthService {
             role:response.data.data.team.role,
             picture:response.data.data.team?.picture,
             is_2fa_enabled:response.data.data.team?.is_2fa_enabled,
+            is_team_member: true,
           };
             loggedUser = team_member;
         }
