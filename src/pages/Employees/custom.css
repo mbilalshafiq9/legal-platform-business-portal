@@ -1,0 +1,11 @@
+.portal-card-hover:hover .employee-details-default {
+  display: block !important;
+}
+
+.portal-card-hover:hover .employee-details-default img {
+  filter: brightness(0) invert(1);
+}
+
+.portal-card-hover:hover .employee-details-default span {
+  color: #fff !important;
+}

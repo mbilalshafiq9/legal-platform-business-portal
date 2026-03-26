@@ -4,7 +4,6 @@ import ApiService from "../services/ApiService";
 import Loader from "../components/Loader"; 
 import licenseImg from "../assets/images/lisence-img.png";
 import AuthService from '../services/AuthService';
-
 import "./Employees/detail.css";
 
 const Account = () => {

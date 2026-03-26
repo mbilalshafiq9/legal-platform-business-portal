@@ -7,7 +7,9 @@ import idImg from "../../assets/images/id.png";
 import emailImg from "../../assets/images/email-teams.png";
 import callImg from "../../assets/images/call-teams.png";
 import roleImg from "../../assets/images/role-teams.png";
+import teamPlaceholder from "../../assets/images/team-placeholder.png";
 import ApiService from "../../services/ApiService";
+import "./custom.css";
 
 // Custom Toggle for Dropdown
 const CustomToggle = React.forwardRef(({ children, onClick }, ref) => (
@@ -459,7 +461,8 @@ const EmployeesList = () => {
               style={{ minHeight: "300px" }}
             >
               <div className="text-center">
-                <h5 className="text-muted">No team members found</h5>
+                <img src={teamPlaceholder} alt="No team members found" style={{ maxWidth: "230px", width: "100%", height: "auto" }} />
+                <h5 className="text-muted mt-3">No team members found</h5>
               </div>
             </div>
           )}
@@ -594,69 +597,7 @@ const EmployeesList = () => {
                         </div>
                       </div>
 
-                      {/* Hover layout - 2 rows with 2 items each */}
-                      <div className="employee-details-hover">
-                        <div className="row mb-2">
-                          <div className="col-6">
-                            <div className="d-flex align-items-center">
-                              <i
-                                className="bi bi-person-fill text-white me-2"
-                                style={{ width: "14px", fontSize: "12px" }}
-                              ></i>
-                              <span
-                                className="text-white fw-semibold"
-                                style={{ fontSize: "13px" }}
-                              >
-                                {employee.employeeId}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="col-6">
-                            <div className="d-flex align-items-center">
-                              <i
-                                className="bi bi-envelope-fill text-white me-2"
-                                style={{ width: "14px", fontSize: "12px" }}
-                              ></i>
-                              <span
-                                className="text-white fw-semibold"
-                                style={{ fontSize: "13px" }}
-                              >
-                                {employee.email}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="row">
-                          <div className="col-6">
-                            <div className="d-flex align-items-center">
-                              <i
-                                className="bi bi-telephone-fill text-white me-2"
-                                style={{ width: "14px", fontSize: "12px" }}
-                              ></i>
-                              <span
-                                className="text-white fw-semibold"
-                                style={{ fontSize: "13px" }}
-                              >
-                                {employee.phone}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="col-6">
-                            <div className="d-flex align-items-center">
-                              <i
-                                className="bi bi-gear-fill text-white me-2"
-                                style={{ width: "14px", fontSize: "12px" }}
-                              ></i>
-                              <span
-                                className="text-white fw-semibold"
-                                style={{ fontSize: "13px" }}
-                              >
-                                Role: {employee.role}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+
                     </div>
                   </div>
                 </div>
