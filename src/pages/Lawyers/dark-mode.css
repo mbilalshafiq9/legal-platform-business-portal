@@ -172,6 +172,18 @@ body.dark-mode .profile-dropdown .text-muted {
   color: #aaaaaa !important;
 }
 
+body.dark-mode .notification-dropdown p {
+  color: #ffffff !important;
+}
+
+body.dark-mode .notification-item.bg-light {
+  background-color: #3d3d3d !important;
+}
+
+body.dark-mode .notification-item {
+  border-bottom-color: #444444 !important;
+}
+
 /* Notification item hover effects in dark mode */
 body.dark-mode .notification-item {
   transition: all 0.2s ease;

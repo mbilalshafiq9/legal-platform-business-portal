@@ -209,6 +209,30 @@ const EmployeesList = () => {
     }
   };
 
+  const handleDeleteRole = async (roleId) => {
+    if (!window.confirm("Are you sure you want to delete this role?")) {
+      return;
+    }
+
+    try {
+      const response = await ApiService.request({
+        method: "POST",
+        url: "deleteTeamRole",
+        data: { id: roleId },
+      });
+      const data = response.data;
+      if (data.status) {
+        setRoles((prev) => prev.filter((r) => r.id !== roleId));
+        toast.success(data.message || "Role deleted successfully");
+      } else {
+        toast.error(data.message || "Failed to delete role");
+      }
+    } catch (error) {
+      console.error("Error deleting role", error);
+      toast.error("Failed to delete role");
+    }
+  };
+
   const handleAddEmployee = async (e) => {
     e.preventDefault();
 
@@ -610,7 +634,7 @@ const EmployeesList = () => {
       {showRolesModal && (
         <>
           <div
-            className="offcanvas offcanvas-end show"
+            className="offcanvas offcanvas-end show roles-permissions-offcanvas"
             tabIndex="-1"
             style={{
               position: "fixed",
@@ -623,7 +647,6 @@ const EmployeesList = () => {
               borderRadius: "13px",
               margin: "20px",
               zIndex: 1045,
-              backgroundColor: "#fff",
             }}
           >
             <div className="offcanvas-header border-bottom">
@@ -653,7 +676,7 @@ const EmployeesList = () => {
                 <label className="form-label fw-semibold">Description</label>
                 <textarea
                   className="form-control portal-form-hover"
-                  rows="3"
+                  rows="6"
                   placeholder="Describe this role"
                   value={roleForm.description}
                   onChange={(e) =>
@@ -711,24 +734,60 @@ const EmployeesList = () => {
                 <ul className="list-group">
                   {roles.map((role) => (
                     <li
-                      key={role.id}
-                      className="list-group-item d-flex justify-content-between align-items-center"
-                      style={{ cursor: "pointer" }}
-                      onClick={() =>
-                        setRoleForm({
-                          id: role.id,
-                          name: role.name,
-                          description: role.description || "",
-                          permission_ids: (role.permissions || []).map(
-                            (p) => p.id,
-                          ),
-                        })
-                      }
-                    >
-                      <span>{role.name}</span>
-                      <span className="badge bg-light text-dark">
-                        {(role.permissions || []).length} permissions
-                      </span>
+                        key={role.id}
+                        className="list-group-item d-flex justify-content-between align-items-center"
+                      >
+                        <span>{role.name}</span>
+                        <div className="d-flex align-items-center gap-3">
+                          <span className="badge bg-light text-dark">
+                            {(role.permissions || []).length} permissions
+                          </span>
+                          <div className="d-flex gap-2">
+                            <button
+                              type="button"
+                              className="btn d-flex align-items-center justify-content-center p-0"
+                              style={{
+                                width: "30px",
+                                height: "30px",
+                                backgroundColor: "#474747",
+                                borderRadius: "6px",
+                                border: "none",
+                              }}
+                              onClick={() =>
+                                setRoleForm({
+                                  id: role.id,
+                                  name: role.name,
+                                  description: role.description || "",
+                                  permission_ids: (role.permissions || []).map(
+                                    (p) => p.id,
+                                  ),
+                                })
+                              }
+                            >
+                              <i
+                                className="bi bi-pencil-square pe-0 text-white"
+                                style={{ fontSize: "14px" }}
+                              ></i>
+                            </button>
+                            <button
+                                type="button"
+                                className="btn d-flex align-items-center justify-content-center p-0"
+                                style={{
+                                  width: "30px",
+                                  height: "30px",
+                                  backgroundColor: "#474747",
+                                  borderRadius: "6px",
+                                  border: "none",
+                                }}
+                                onClick={() => handleDeleteRole(role.id)}
+                              >
+                                <i
+                                  className="bi bi-trash pe-0 text-white"
+                                  style={{ fontSize: "14px" }}
+                                ></i>
+                              </button>
+                          </div>
+                        </div>
                     </li>
                   ))}
                   {roles.length === 0 && (
@@ -756,7 +815,7 @@ const EmployeesList = () => {
                 </button>
                 <button
                   type="button"
-                  className="btn btn-dark"
+                  className="btn bg-black text-white"
                   onClick={async () => {
                     if (!roleForm.name.trim()) {
                       toast.error("Role name is required");

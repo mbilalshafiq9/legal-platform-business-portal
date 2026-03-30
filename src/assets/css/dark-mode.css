@@ -173,6 +173,18 @@ body.dark-mode .profile-dropdown .text-muted {
   color: #aaaaaa !important;
 }
 
+body.dark-mode .notification-dropdown p {
+  color: #ffffff !important;
+}
+
+body.dark-mode .notification-item.bg-light {
+  background-color: #3d3d3d !important;
+}
+
+body.dark-mode .notification-item {
+  border-bottom-color: #444444 !important;
+}
+
 /* Dark mode hover effects for profile dropdown buttons */
 body.dark-mode .profile-dropdown .btn-transparent {
   color: #aaaaaa !important;
@@ -491,6 +503,20 @@ body.dark-mode .portal-card-hover:hover div {
 body.dark-mode .portal-card-hover:hover .flex-fill p,
 body.dark-mode .portal-card-hover:hover .stats-bottom-content span,
 body.dark-mode .portal-card-hover:hover .stats-bottom-content i {
+  color: #000000 !important;
+}
+
+/* Team card icons in dark mode */
+body.dark-mode .portal-card-hover .employee-details-default img {
+  filter: brightness(0) invert(1) !important;
+}
+
+/* When hovered in dark mode, card background is white, icons should be black */
+body.dark-mode .portal-card-hover:hover .employee-details-default img {
+  filter: none !important;
+}
+
+body.dark-mode .portal-card-hover:hover .employee-details-default span {
   color: #000000 !important;
 }
 
@@ -2276,6 +2302,45 @@ body.dark-mode .login-button.rounded-pill.d-flex.align-items-center.justify-cont
 body.dark-mode .login-button.rounded-pill.d-flex.align-items-center.justify-content-center.position-relative.aos-init.aos-animate:hover {
   background-color: #000000a0 !important;
   transition: all 0.3s ease;
+}
+
+/* Roles & Permissions popup dark mode fixes */
+body.dark-mode .roles-permissions-offcanvas {
+  background-color: #2d2d2d !important;
+  color: #ffffff !important;
+  overflow: hidden !important;
+}
+
+body.dark-mode .roles-permissions-offcanvas .offcanvas-header {
+  background-color: #2d2d2d !important;
+  border-bottom: 1px solid #404040 !important;
+}
+
+body.dark-mode .roles-permissions-offcanvas .offcanvas-title {
+  color: #ffffff !important;
+}
+
+body.dark-mode .roles-permissions-offcanvas .form-control::placeholder,
+body.dark-mode .roles-permissions-offcanvas textarea::placeholder {
+  color: #999999 !important;
+  opacity: 1 !important;
+}
+
+body.dark-mode .roles-permissions-offcanvas .list-group-item {
+  background-color: #3a3a3a !important;
+  border-color: #444444 !important;
+  color: #ffffff !important;
+}
+
+body.dark-mode .roles-permissions-offcanvas .btn-light {
+  background-color: #3a3a3a !important;
+  border-color: #444444 !important;
+  color: #ffffff !important;
+}
+
+body.dark-mode .roles-permissions-offcanvas .btn-light:hover {
+  background-color: #4a4a4a !important;
+  color: #ffffff !important;
 }
 
 /* Dark mode Siri border animation visibility */

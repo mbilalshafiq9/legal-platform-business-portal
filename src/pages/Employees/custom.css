@@ -7,5 +7,9 @@
 }
 
 .portal-card-hover:hover .employee-details-default span {
-  color: #fff !important;
+  /* color: #fff !important; */
+}
+
+.roles-permissions-offcanvas {
+  background-color: #ffffff !important;
 }
