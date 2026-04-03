@@ -325,7 +325,7 @@ const Login = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="form-input rounded-pill login-page-inp"
-                placeholder="noon@company.com"
+                placeholder="Enter Email"
                 style={{ fontSize: "18px", width: "398px", height: "67px", paddingLeft: "30px", paddingRight: "30px" }}
               />
             </div>

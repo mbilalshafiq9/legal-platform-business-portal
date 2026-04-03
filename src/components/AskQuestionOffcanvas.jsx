@@ -3,7 +3,6 @@ import { toast } from "react-toastify";
 import Lottie from "lottie-react";
 import ApiService from "../services/ApiService";
 import successAnimation from "../assets/images/Succes.json";
-import { color } from "framer-motion";
 
 const AskQuestionOffcanvas = ({ show, onClose, jurisdictionOptions = [], onSuccess }) => {
   const [isClosing, setIsClosing] = useState(false);
@@ -12,6 +11,7 @@ const AskQuestionOffcanvas = ({ show, onClose, jurisdictionOptions = [], onSucce
   const [showDropdown, setShowDropdown] = useState(false);
   const [search, setSearch] = useState("");
   const [attachment, setAttachment] = useState(null);
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const dropdownRef = useRef(null);
   const fileInputRef = useRef(null);
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
@@ -34,6 +34,7 @@ const AskQuestionOffcanvas = ({ show, onClose, jurisdictionOptions = [], onSucce
       setShowDropdown(false);
       setSearch("");
       setAttachment(null);
+      setAcceptTerms(false);
     }
   }, [show]);
 
@@ -44,6 +45,7 @@ const AskQuestionOffcanvas = ({ show, onClose, jurisdictionOptions = [], onSucce
       setShowDropdown(false);
       setSearch("");
       setAttachment(null);
+      setAcceptTerms(false);
       onClose && onClose();
     }, 300);
   };
@@ -69,6 +71,10 @@ const AskQuestionOffcanvas = ({ show, onClose, jurisdictionOptions = [], onSucce
     }
     if (!jurisdiction) {
       toast.error("Please select a jurisdiction");
+      return;
+    }
+    if (!acceptTerms) {
+      toast.error("Please accept the privacy policy and terms & conditions");
       return;
     }
     try {
@@ -130,11 +136,11 @@ const AskQuestionOffcanvas = ({ show, onClose, jurisdictionOptions = [], onSucce
           zIndex: 1045,
           transform: isClosing ? "translateX(100%)" : "translateX(0)",
           animation: isClosing ? "slideOutToRight 0.3s ease-in" : "slideInFromRight 0.3s ease-out",
-          backgroundColor: "#fff",
+          backgroundColor: "#f5f5f5",
           height: window.innerWidth < 768 ? "calc(100% - 20px)" : "calc(100% - 40px)",
         }}
       >
-        <div className="offcanvas-header border-bottom" style={{ borderTopLeftRadius: "15px", borderTopRightRadius: "15px" }}>
+        <div className="offcanvas-header border-bottom" style={{ borderTopLeftRadius: "15px", borderTopRightRadius: "15px", backgroundColor: "#f5f5f5" }}>
           <div className="d-flex justify-content-between align-items-center w-100">
             <h5 className="mb-0 fw-bold">Post Question</h5>
             <button type="button" className="btn-close" onClick={handleClose}></button>
@@ -153,11 +159,13 @@ const AskQuestionOffcanvas = ({ show, onClose, jurisdictionOptions = [], onSucce
                   resize: "none",
                   width: "100%",
                   height: "217px",
-                  border: "1px solid #C9C9C9",
-                  borderRadius: "8px",
+                  border: "none",
+                  borderRadius: "15px",
                   position: "relative",
                   zIndex: 1,
                   backgroundColor: "#ffffff",
+                  boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
+                  padding: "20px"
                 }}
               ></textarea>
             </div>
@@ -174,17 +182,18 @@ const AskQuestionOffcanvas = ({ show, onClose, jurisdictionOptions = [], onSucce
                   style={{
                     width: "100%",
                     height: "70px",
-                    border: "1px solid #C9C9C9",
-                    borderRadius: "8px",
+                    border: "none",
+                    borderRadius: "15px",
                     backgroundColor: "#fff",
                     cursor: "pointer",
                     textAlign: "left",
-                    paddingLeft: "12px",
-                    paddingRight: "12px",
+                    paddingLeft: "20px",
+                    paddingRight: "20px",
+                    boxShadow: "0 2px 12px rgba(0,0,0,0.08)"
                   }}
                 >
-                  <span style={{ color: jurisdiction ? "#000" : "#6c757d" }}>
-                    {jurisdiction ? jurisdictionOptions.find(j => j.value === jurisdiction)?.label || "Jurisdiction" : "Jurisdiction"}
+                  <span style={{ color: jurisdiction ? "#000" : "#6c757d", fontSize: "16px" }}>
+                    {jurisdiction ? jurisdictionOptions.find(j => j.value === jurisdiction)?.label || "Select Jurisdiction" : "Select Jurisdiction"}
                   </span>
                   <i className={`bi bi-chevron-${showDropdown ? "up" : "down"} fs-5 text-dark`}></i>
                 </button>
@@ -254,13 +263,15 @@ const AskQuestionOffcanvas = ({ show, onClose, jurisdictionOptions = [], onSucce
                 style={{
                   width: "100%",
                   height: "64px",
-                  border: "1px dashed #C9C9C9",
-                  borderRadius: "8px",
+                  border: "none",
+                  borderRadius: "15px",
                   display: "flex",
                   alignItems: "center",
                   cursor: "pointer",
                   padding: "0 16px",
                   gap: "12px",
+                  backgroundColor: "#fff",
+                  boxShadow: "0 2px 12px rgba(0,0,0,0.08)"
                 }}
               >
                 <div
@@ -272,13 +283,12 @@ const AskQuestionOffcanvas = ({ show, onClose, jurisdictionOptions = [], onSucce
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    border: "1px dashed #BEBEBE"
                   }}
                 >
-                  <i className="bi bi-paperclip fs-4 text-muted"></i>
+                  <i className="bi bi-plus-lg fs-4 text-muted"></i>
                 </div>
                 <span style={{ color: attachment ? "#000" : "#6c757d", fontSize: "14px" }}>
-                  {attachment ? attachment.name : "Attach Document"}
+                  {attachment ? attachment.name : "Add More Detail"}
                 </span>
                 {attachment && (
                   <button
@@ -291,6 +301,29 @@ const AskQuestionOffcanvas = ({ show, onClose, jurisdictionOptions = [], onSucce
                     }}
                   ></button>
                 )}
+              </div>
+            </div>
+
+            <div
+              className="mb-4"
+              style={{
+                width: "100%",
+                height: "75px",
+                borderRadius: "50px",
+                backgroundColor: "#fff",
+                boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
+                overflow: "hidden"
+              }}
+            >
+              <div className="d-flex justify-content-between align-items-center h-100 pe-4" style={{ paddingLeft: "30px"}}>
+                <div>
+                  <h6 className="fw-bold mb-1" style={{ fontSize: "16px" }}>Post Question Fee</h6>
+                  <small style={{ color: "#474747" }}>1 Question post only</small>
+                </div>
+                <div className="text-end d-flex flex-column justify-content-center align-items-center" style={{ minWidth: "100px" }}>
+                  <div className="fw-light" style={{ fontSize: "14px" }}>USD</div>
+                  <div className="fw-bold" style={{ fontSize: "24px" }}>3.99</div>
+                </div>
               </div>
             </div>
 
@@ -333,33 +366,25 @@ const AskQuestionOffcanvas = ({ show, onClose, jurisdictionOptions = [], onSucce
                 </div>
               </div>
             </div>
+
+            <div className="mb-4">
+              <div className="form-check d-flex align-items-center gap-2 justify-content-center">
+                <input
+                  className="form-check-input mt-0"
+                  type="checkbox"
+                  id="privacyTerms"
+                  checked={acceptTerms}
+                  onChange={(e) => setAcceptTerms(e.target.checked)}
+                  style={{ width: "20px", height: "20px", cursor: "pointer", border: "1px solid #C9C9C9" }}
+                />
+                <label className="form-check-label mb-0" htmlFor="privacyTerms" style={{ fontSize: "14px", color: "#374151", cursor: "pointer", fontWeight: "500" }}>
+                  Accept all Privacy policy and Terms & conditions.
+                </label>
+              </div>
+            </div>
           </div>
 
           <div className="mt-auto pb-2">
-            <div
-              className="mb-3 rounded-4"
-              style={{
-                border: "1px solid #D3D3D3",
-                width: "100%",
-                height: "75px",
-                borderRadius: "8px",
-              }}
-            >
-              <div className="d-flex justify-content-between align-items-center h-100 rounded">
-                <div className="p-3">
-                  <h6 className="fw-bold mb-1">Post Question Fee</h6>
-                  <small className="" style={{ color: "#474747" }}>1 Question post only</small>
-                </div>
-                <div
-                  className="text-end px-5 h-100 d-flex flex-column justify-content-center"
-                  style={{ borderLeft: "1px solid #D3D3D3", minWidth: "120px", alignItems: "center" }}
-                >
-                  <div className="fw-light fs-3">USD</div>
-                  <div className="fw-bold fs-1">1.00</div>
-                </div>
-              </div>
-            </div>
-
             <button
               className="btn text-white rounded-pill"
               onClick={handleSubmit}

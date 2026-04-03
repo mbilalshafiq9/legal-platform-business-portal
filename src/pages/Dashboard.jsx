@@ -245,10 +245,11 @@ const Dashboard = () => {
                 <h1 className="text-black mb-2 dashboard-welcome-title">
                   Welcome Back! {userInfo.name || "User"}
                 </h1>
-                <p className="text-gray-600 mb-4 dashboard-welcome-subtitle">
+                {/* <p className="text-gray-600 mb-4 dashboard-welcome-subtitle">
                   {userInfo.location || "Location not available"}
-                </p>
+                </p> */}
               </div>
+              
 
               {/* Action Cards */}
               <div className="row mb-8">

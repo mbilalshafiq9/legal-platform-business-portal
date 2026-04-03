@@ -97,6 +97,9 @@ const Header = () => {
     location.pathname.includes("/employees/");
   const isAccountPage = location.pathname.includes("/account");
 
+  // Check if we're on the Help & Support page
+  const isHelpSupportPage = location.pathname.includes("/help-support");
+
   const logout = () => {
     setShowLogoutModal(true);
   };
@@ -563,6 +566,7 @@ const Header = () => {
     if (isEmployeeDetailsPage) return { title: "My Account", subtitle: "View and manage account information." };
     if (isEmployeesPage) return { title: "Team", subtitle: "Add your team members and send invites." };
     if (isAccountPage) return { title: "Account", subtitle: "Manage profile, email, and security." };
+    if (isHelpSupportPage) return { title: "Help and Support", subtitle: "Get help and support" };
     
     // Default for Dashboard or unknown pages
     return { title: "Dashboard", subtitle: "Monitor your cases and messages." };

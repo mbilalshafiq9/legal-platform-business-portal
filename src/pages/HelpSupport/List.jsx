@@ -24,6 +24,7 @@ const HelpSupport = () => {
   const [attachment, setAttachment] = useState(null);
   const [faqs, setFaqs] = useState([]);
   const [loadingFaqs, setLoadingFaqs] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const fetchFaqs = async () => {
@@ -46,6 +47,11 @@ const HelpSupport = () => {
 
     fetchFaqs();
   }, []);
+
+  const filteredFaqs = faqs.filter(faq => 
+    faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    faq.answer.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const toggleFAQ = (index) => {
     if (openIndex === index) {
@@ -155,6 +161,8 @@ const HelpSupport = () => {
                 type="text"
                 className="help-search-input"
                 placeholder="Search for questions or topics..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
           </div>
@@ -174,11 +182,13 @@ const HelpSupport = () => {
                     <span className="visually-hidden">Loading...</span>
                   </div>
                 </div>
-              ) : faqs.length === 0 ? (
-                <p className="text-muted">No FAQs available.</p>
+              ) : filteredFaqs.length === 0 ? (
+                <p className="text-muted">
+                  {searchQuery ? `No results found for "${searchQuery}"` : "No FAQs available."}
+                </p>
               ) : (
                 <div className="faq-list">
-                  {faqs.map((faq, index) => (
+                  {filteredFaqs.map((faq, index) => (
                     <div
                       key={faq.id}
                       className={`faq-item ${openIndex === index ? "active" : ""}`}
@@ -557,11 +567,11 @@ const HelpSupport = () => {
                         paddingRight: "40px",
                       }}
                     >
-                      <option value="">i.e Booking</option>
-                      <option value="booking">Booking</option>
-                      <option value="payment">Payment</option>
-                      <option value="technical">Technical</option>
-                      <option value="other">Other</option>
+                      <option value="">Select Issue</option>
+                      <option value="bugs">Bugs</option>
+                      <option value="payment_issue">payment issue</option>
+                      <option value="lawyer_issue">issue with a lawyer</option>
+                      <option value="other">other</option>
                     </select>
                   </div>
 
@@ -633,9 +643,9 @@ const HelpSupport = () => {
 
             {contactSupportTab === "phone" && (
               <div className="contact-tab-content px-4 pb-4">
-                <h6 className="fw-bold mb-3">Call Us</h6>
+                <h6 className="fw-bold mb-3">WhatsApp Us</h6>
                 <p className="text-muted mb-4">
-                  Reach out to our support team directly via phone.
+                  Reach out to our support team directly via WhatsApp.
                 </p>
                 <div className="text-center mb-4">
                   <div className="mb-3">
@@ -645,11 +655,13 @@ const HelpSupport = () => {
                   <p className="text-muted mb-4">Available 24/7</p>
                 </div>
                 <a
-                  href="tel:+971565556294"
+                  href="https://wa.me/+971565556294"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="btn bg-black text-white rounded-pill w-100 py-3"
                 >
-                  <i className="bi bi-telephone-fill me-2"></i>
-                  Call Now
+                  <i className="bi bi-whatsapp me-2"></i>
+                  WhatsApp Now
                 </a>
               </div>
             )}

@@ -424,6 +424,32 @@ const List = () => {
 
             console.log("Transformed Lawyers:", transformedLawyers); // Debug log
 
+            // Apply search filter client-side across multiple fields
+            if (searchTerm && searchTerm.trim()) {
+              const lowerSearch = searchTerm.trim().toLowerCase();
+              transformedLawyers = transformedLawyers.filter((lawyer) => {
+                const nameMatch = lawyer.name.toLowerCase().includes(lowerSearch);
+                const firmMatch = lawyer.firmName.toLowerCase().includes(lowerSearch);
+                const categoryMatch = lawyer.categories.some((cat) =>
+                  cat.name.toLowerCase().includes(lowerSearch)
+                );
+                const jurisdictionMatch = lawyer.jurisdictions.some((j) =>
+                  j.name.toLowerCase().includes(lowerSearch)
+                );
+                const priceMatch =
+                  lawyer.weekly_price.toString().includes(lowerSearch) ||
+                  lawyer.monthly_price.toString().includes(lowerSearch);
+
+                return (
+                  nameMatch ||
+                  firmMatch ||
+                  categoryMatch ||
+                  jurisdictionMatch ||
+                  priceMatch
+                );
+              });
+            }
+
             // Apply Company/Individual filter client-side
             if (typeFilter === "Company") {
               transformedLawyers = transformedLawyers.filter(lawyer => lawyer.type === "Company");
